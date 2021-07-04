@@ -2,7 +2,8 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++14
+CONFIG += c++14 \
+    sdk_no_version_check
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -14,6 +15,7 @@ SOURCES += \
     studybrowser.cpp
 
 HEADERS += \
+    dcmlayer.h \
     globalstate.h \
     mainwindow.h \
     studybrowser.h

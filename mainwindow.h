@@ -19,13 +19,14 @@ public:
     ~MainWindow();
 
 private slots :
-    void            ToExitApp();
-    void            ToStudyBrowser();
+    void                                ToExitApp();
+    void                                ToStudyBrowser();
 
 
 private:
     Ui::MainWindow*                     ui_;
-    StudyBrowser*                       study_browser_;
+    GlobalState*                        global_state_ = nullptr;
+    StudyBrowser*                       study_browser_ = nullptr;
 
 };
 #endif // MAINWINDOW_H

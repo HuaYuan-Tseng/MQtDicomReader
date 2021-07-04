@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui_->menuButton_study_browser, SIGNAL(clicked()), this, SLOT(ToStudyBrowser()));
 
     // Menubar
-    study_browser_ = new StudyBrowser();
+    study_browser_ = new StudyBrowser(global_state_);
     ui_->mainwindow_stacked_widget->insertWidget(MainStackedWidget::STUDY_BROWSER, study_browser_);
 
 

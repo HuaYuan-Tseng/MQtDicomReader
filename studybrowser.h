@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "globalstate.h"
+
 namespace Ui {
 class StudyBrowser;
 }
@@ -12,13 +14,17 @@ class StudyBrowser : public QWidget
     Q_OBJECT
 
 public:
-    explicit StudyBrowser(QWidget *parent = nullptr);
+    explicit StudyBrowser(GlobalState* state, QWidget* parent = nullptr);
     ~StudyBrowser();
+
+private slots:
+    void                        ToOpenFromFolder();
 
 public:
     Ui::StudyBrowser*           ui_;
 
 private:
+    GlobalState*                global_state_ = nullptr;
 
 };
 
