@@ -12,13 +12,15 @@ CONFIG += c++14 \
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    studybrowser.cpp
+    studybrowser.cpp \
+    tableoperate.cpp
 
 HEADERS += \
     dcmlayer.h \
     globalstate.h \
     mainwindow.h \
-    studybrowser.h
+    studybrowser.h \
+    tableoperate.h
 
 FORMS += \
     mainwindow.ui \

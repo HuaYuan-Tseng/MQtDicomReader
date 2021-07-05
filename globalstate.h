@@ -1,5 +1,6 @@
 #ifndef GLOBALSTATE_H
 #define GLOBALSTATE_H
+
 #include <QString>
 #include <vector>
 
@@ -16,7 +17,7 @@ struct GlobalState {
     struct StudyBrowser {
         Table study_table = {{"Patient ID", "Patient Name", "Access No.", "Description"}, -1};
         Table series_table = {{"Series No.", "Series Description"}, -1};
-        Table informatin_table = {{"Description", "Value"}, -1};
+        Table information_table = {{"Description", "Value"}, -1};
     }study_browser_;
 };
 

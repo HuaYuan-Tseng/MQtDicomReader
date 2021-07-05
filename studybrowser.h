@@ -17,6 +17,11 @@ public:
     explicit StudyBrowser(GlobalState* state, QWidget* parent = nullptr);
     ~StudyBrowser();
 
+private:
+    void                        SetStudyTableHeader();
+    void                        SetSeriesTableHeader();
+    void                        SetInformationTableHeader();
+
 private slots:
     void                        ToOpenFromFolder();
 
