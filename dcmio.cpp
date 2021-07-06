@@ -2,6 +2,10 @@
 #include <QDebug>
 #include <QDir>
 
+#include <dcmdata/dctk.h>
+#include <dcmdata/dcistrmf.h>
+#include <ofstd/ofcond.h>
+
 DcmIO::DcmIO(QObject *parent) : QObject(parent)
 {
 }
@@ -30,6 +34,11 @@ bool DcmIO::LoadFromFolder(QString path, DcmList &list)
     }
 
     return true;
+}
+
+void DcmIO::GetDcmMetaAndData(QString path, DcmList& list)
+{
+    //if (OFCondition)
 }
 
 QFileInfoList DcmIO::SearchFilesFromAllFolders(QString path)

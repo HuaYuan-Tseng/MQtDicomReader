@@ -17,6 +17,7 @@ public:
 
 private:
     QFileInfoList       SearchFilesFromAllFolders(QString path);
+    void                GetDcmMetaAndData(QString path, DcmList& list);
 
 signals:
     void        progress(int);      // loading progress
