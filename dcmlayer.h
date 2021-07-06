@@ -37,7 +37,9 @@ public:
     QString                     patient_id_ = "";
     QString                     patient_bd_ = "";
 
-    std::vector<DcmStudy>     study_list_ = {};
+    std::vector<DcmStudy>       study_list_ = {};
 };
+
+using DcmList = std::vector<DcmPatient>;
 
 #endif // DCMLAYER_H

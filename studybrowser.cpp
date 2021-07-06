@@ -1,7 +1,10 @@
 #include "studybrowser.h"
 #include "ui_studybrowser.h"
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "tableoperate.h"
+#include "dcmio.h"
 
 StudyBrowser::StudyBrowser(GlobalState* state, QWidget* parent) :
     QWidget(parent),
@@ -15,6 +18,8 @@ StudyBrowser::StudyBrowser(GlobalState* state, QWidget* parent) :
     SetInformationTableHeader();
 
     QObject::connect(ui_->browserButton_open_folder, SIGNAL(clicked()), this, SLOT(ToOpenFromFolder()));
+
+    dcm_list_ = new DcmList();
 }
 
 StudyBrowser::~StudyBrowser()
@@ -24,6 +29,27 @@ StudyBrowser::~StudyBrowser()
 
 void StudyBrowser::ToOpenFromFolder()
 {
+    global_state_->study_browser_.open_dir =
+            QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
+                                              "/Users/huayuan/Documents/Dev/Dicom",
+                                              QFileDialog::ShowDirsOnly |
+                                              QFileDialog::DontResolveSymlinks);
+
+    if (global_state_->study_browser_.open_dir.isEmpty())
+    {
+        QMessageBox::warning(this, "QtDicomReader", "This path is empty !");
+        return;
+    }
+    qDebug() << "Open Path : " << global_state_->study_browser_.open_dir;
+
+    DcmIO* dcmio = new DcmIO();
+    QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
+    if (dcmio->LoadFromFolder(global_state_->study_browser_.open_dir, *dcm_list_))
+    {
+        qDebug() << "Success !";
+    }
+    QObject::disconnect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
+    delete dcmio;
 }
 
 void StudyBrowser::SetStudyTableHeader()

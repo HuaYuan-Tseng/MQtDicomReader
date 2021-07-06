@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include "globalstate.h"
+#include "dcmlayer.h"
 
 namespace Ui {
 class StudyBrowser;
@@ -22,6 +23,7 @@ private:
     void                        SetSeriesTableHeader();
     void                        SetInformationTableHeader();
 
+
 private slots:
     void                        ToOpenFromFolder();
 
@@ -30,7 +32,7 @@ public:
 
 private:
     GlobalState*                global_state_ = nullptr;
-
+    DcmList*                    dcm_list_ = nullptr;
 };
 
 #endif // STUDYBROWSER_H
