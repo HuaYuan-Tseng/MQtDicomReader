@@ -40,6 +40,6 @@ public:
     std::vector<DcmStudy>       study_list_ = {};
 };
 
-using DcmList = std::vector<DcmPatient>;
+using DcmContent = std::vector<DcmPatient>;
 
 #endif // DCMLAYER_H

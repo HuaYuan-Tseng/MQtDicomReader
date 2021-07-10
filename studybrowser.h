@@ -4,7 +4,6 @@
 #include <QWidget>
 
 #include "globalstate.h"
-#include "dcmlayer.h"
 
 namespace Ui {
 class StudyBrowser;
@@ -15,24 +14,26 @@ class StudyBrowser : public QWidget
     Q_OBJECT
 
 public:
-    explicit StudyBrowser(GlobalState* state, QWidget* parent = nullptr);
+    StudyBrowser(QWidget* parent = nullptr);
     ~StudyBrowser();
 
 private:
     void                        SetStudyTableHeader();
     void                        SetSeriesTableHeader();
     void                        SetInformationTableHeader();
-
+    void                        RefreshStudyTableContents();
+    void                        RefreshSeriesTableContents();
+    void                        RefreshInformationTableContents();
 
 private slots:
     void                        ToOpenFromFolder();
+    void                        SelectStudyTable(const QModelIndex& index);
+    void                        SelectSeriesTable(const QModelIndex& index);
+    void                        SelectInformationTable(const QModelIndex& index);
 
 public:
     Ui::StudyBrowser*           ui_;
 
-private:
-    GlobalState*                global_state_ = nullptr;
-    DcmList*                    dcm_list_ = nullptr;
 };
 
 #endif // STUDYBROWSER_H

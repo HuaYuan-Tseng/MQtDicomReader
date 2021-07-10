@@ -4,6 +4,8 @@
 #include <QString>
 #include <vector>
 
+#include "dcmlayer.h"
+
 enum MainStackedWidget
 {
     STUDY_BROWSER
@@ -15,15 +17,21 @@ struct Table
     int                     select_index = -1;
 };
 
-struct GlobalState
+namespace GlobalState
 {
-    struct StudyBrowser
-    {
-        QString             open_dir = "";
-        Table               study_table = {{"Patient ID", "Patient Name", "Access No.", "Description"}, -1};
-        Table               series_table = {{"Series No.", "Series Description"}, -1};
-        Table               information_table = {{"Description", "Value"}, -1};
-    }   study_browser_;
+    class StudyBrowser {
+    public:
+        QString             open_dir_ = "";
+        DcmContent          dcm_list_ = {};
+
+        Table               study_table_ = {{"Patient ID", "Patient Name", "Study Description"}, 0};
+        Table               series_table_ = {{"Series No.", "Series Description"}, 0};
+        Table               information_table_ = {{"Description", "Value"}, -1};
+        int                 select_patient_index_ = 0;
+        int                 select_study_index_ = 0;
+        int                 select_series_index_ = 0;
+    };
+    static StudyBrowser     study_browser_;
 };
 
 #endif // GLOBALSTATE_H

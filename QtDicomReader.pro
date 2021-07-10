@@ -28,10 +28,10 @@ FORMS += \
     mainwindow.ui \
     studybrowser.ui
 
-INCLUDEPATH += /usr/local/Cellar/dcmtk/3.6.6/include/dcmtk\
+INCLUDEPATH += /usr/local/Cellar/dcmtk/3.6.6/include/\
 
-LIBS += -L/usr/local/Cellar/dcmtk/3.6.6/-l\
-        -lcmr.16.3.6.6 \
+LIBS += -L/usr/local/Cellar/dcmtk/3.6.6/lib\
+        -lcmr.16.3.6.6\
         -ldcmjpls.16.3.6.6 \
         -ldcmtls.16.3.6.6 \
         -ldcmdata.16.3.6.6 \
