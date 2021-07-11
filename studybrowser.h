@@ -27,6 +27,7 @@ private:
 
 private slots:
     void                        ToOpenFromFolder();
+    void                        ToClearOpenedDicom();
     void                        SelectStudyTable(const QModelIndex& index);
     void                        SelectSeriesTable(const QModelIndex& index);
     void                        SelectInformationTable(const QModelIndex& index);

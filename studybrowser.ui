@@ -22,7 +22,7 @@
      <height>871</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,2,17">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,4,4,16">
     <item>
      <spacer name="verticalSpacer">
       <property name="orientation">
@@ -58,6 +58,31 @@
       </property>
       <property name="text">
        <string>Open Folder</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="browserButton_clear_all">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Clear All</string>
       </property>
      </widget>
     </item>

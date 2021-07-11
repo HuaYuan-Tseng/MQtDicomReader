@@ -42,7 +42,7 @@ void DcmIO::GetDcmDataset(QString path, DcmContent& list)
     if (result.bad())
     {
         qDebug() << "Failed to load " << path << " : ";
-        qDebug() << result.text();
+        //qDebug() << result.text();
         delete format;
         return;
     }

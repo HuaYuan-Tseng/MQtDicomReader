@@ -18,6 +18,7 @@ StudyBrowser::StudyBrowser(QWidget* parent) :
     SetInformationTableHeader();
 
     QObject::connect(ui_->browserButton_open_folder, SIGNAL(clicked()), this, SLOT(ToOpenFromFolder()));
+    QObject::connect(ui_->browserButton_clear_all, SIGNAL(clicked()), this, SLOT(ToClearOpenedDicom()));
     QObject::connect(ui_->table_study, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectStudyTable(const QModelIndex&)));
     QObject::connect(ui_->table_series, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectSeriesTable(const QModelIndex&)));
     QObject::connect(ui_->table_information, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectInformationTable(const QModelIndex&)));
@@ -155,6 +156,22 @@ void StudyBrowser::SelectInformationTable(const QModelIndex& index)
     {
         ui_->table_information->clearSelection();
     }
+}
+
+void StudyBrowser::ToClearOpenedDicom()
+{
+    GlobalState::study_browser_.open_dir_.clear();
+    GlobalState::study_browser_.dcm_list_.clear();
+    GlobalState::study_browser_.study_table_.select_index = 0;
+    GlobalState::study_browser_.series_table_.select_index = 0;
+    GlobalState::study_browser_.information_table_.select_index = -1;
+    GlobalState::study_browser_.select_patient_index_ = 0;
+    GlobalState::study_browser_.select_series_index_ = 0;
+    GlobalState::study_browser_.select_study_index_ = 0;
+    RefreshStudyTableContents();
+    RefreshSeriesTableContents();
+    RefreshInformationTableContents();
+    ui_->progressbar->setValue(0);
 }
 
 void StudyBrowser::SetStudyTableHeader()
