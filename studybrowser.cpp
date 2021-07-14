@@ -38,11 +38,7 @@ void StudyBrowser::ToOpenFromFolder()
                                               QFileDialog::ShowDirsOnly |
                                               QFileDialog::DontResolveSymlinks);
 
-    if (GlobalState::study_browser_.open_dir_.isEmpty())
-    {
-        QMessageBox::warning(this, "QtDicomReader", "This path is empty !");
-        return;
-    }
+    if (GlobalState::study_browser_.open_dir_.isEmpty()) return;
     qDebug() << "Open Path : " << GlobalState::study_browser_.open_dir_;
 
     DcmIO* dcmio = new DcmIO();
@@ -61,6 +57,7 @@ void StudyBrowser::RefreshStudyTableContents()
 {
     QStandardItemModel* model = reinterpret_cast<QStandardItemModel*>(ui_->table_study->model());
     if (model->rowCount() > 0) model->removeRows(0, model->rowCount());
+    if (GlobalState::study_browser_.dcm_list_.empty()) return;
 
     std::vector<std::vector<QString>> study_table;
     for (const auto& patient : GlobalState::study_browser_.dcm_list_)
@@ -85,6 +82,8 @@ void StudyBrowser::RefreshSeriesTableContents()
 {
     QStandardItemModel* model = reinterpret_cast<QStandardItemModel*>(ui_->table_series->model());
     if (model->rowCount() > 0) model->removeRows(0, model->rowCount());
+    if (GlobalState::study_browser_.dcm_list_.empty()) return;
+
     int patient_index = GlobalState::study_browser_.select_patient_index_;
     int study_index = GlobalState::study_browser_.select_study_index_;
     std::vector<std::vector<QString>> series_table;
@@ -107,6 +106,7 @@ void StudyBrowser::RefreshInformationTableContents()
     QStandardItemModel* model = reinterpret_cast<QStandardItemModel*>(ui_->table_information->model());
     if (model->rowCount() > 0) model->removeRows(0, model->rowCount());
     if (GlobalState::study_browser_.dcm_list_.empty()) return;
+
     int patient_index = GlobalState::study_browser_.select_patient_index_;
     int study_index = GlobalState::study_browser_.select_study_index_;
     int series_index = GlobalState::study_browser_.select_series_index_;
