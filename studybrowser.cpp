@@ -17,7 +17,8 @@ StudyBrowser::StudyBrowser(QWidget* parent) :
     SetSeriesTableHeader();
     SetInformationTableHeader();
 
-    QObject::connect(ui_->browserButton_open_folder, SIGNAL(clicked()), this, SLOT(ToOpenFromFolder()));
+    QObject::connect(ui_->browserButton_open_folder, SIGNAL(clicked()), this, SLOT(ToLoadFromFolder()));
+    QObject::connect(ui_->browserButton_open_series, SIGNAL(clicked()), this, SLOT(ToOpenDicomSeries()));
     QObject::connect(ui_->browserButton_clear_all, SIGNAL(clicked()), this, SLOT(ToClearOpenedDicom()));
     QObject::connect(ui_->table_study, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectStudyTable(const QModelIndex&)));
     QObject::connect(ui_->table_series, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectSeriesTable(const QModelIndex&)));
@@ -30,7 +31,7 @@ StudyBrowser::~StudyBrowser()
     delete ui_;
 }
 
-void StudyBrowser::ToOpenFromFolder()
+void StudyBrowser::ToLoadFromFolder()
 {
     GlobalState::study_browser_.open_dir_ =
             QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
@@ -51,6 +52,17 @@ void StudyBrowser::ToOpenFromFolder()
     }
     QObject::disconnect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
     delete dcmio;
+}
+
+void StudyBrowser::ToOpenDicomSeries()
+{
+    if (GlobalState::study_browser_.dcm_list_.empty()) return;
+
+    const int patient_index = GlobalState::study_browser_.select_patient_index_;
+    const int study_index = GlobalState::study_browser_.select_study_index_;
+    const int series_index = GlobalState::study_browser_.select_series_index_;
+    auto& instance_list = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].instance_list_;
+
 }
 
 void StudyBrowser::RefreshStudyTableContents()
@@ -216,3 +228,19 @@ void StudyBrowser::SetInformationTableHeader()
     ui_->table_information->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
     ui_->table_information->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
 }
+
+/*
+ *  //Test Dicom Layer
+    auto& list = GlobalState::study_browser_.dcm_list_;
+    qDebug() << "Patient Count : " << list.size();
+    for (int i = 0; i < list.size(); ++i)
+    {
+        qDebug() << "Patient " << i << " : Study Size : " << list[i].study_list_.size();
+        for (int j = 0; j < list[i].study_list_.size(); ++j)
+        {
+            qDebug() << "Study " << j << " : Series Size : " << list[i].study_list_[j].series_list_.size();
+            for (int k = 0; k < list[i].study_list_[j].series_list_.size(); ++k)
+                qDebug() << "Series " << k << " : Instance Size : " << list[i].study_list_[j].series_list_[k].instance_list_.size();
+        }
+    }
+*/

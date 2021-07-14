@@ -21,13 +21,16 @@ private:
     void                        SetStudyTableHeader();
     void                        SetSeriesTableHeader();
     void                        SetInformationTableHeader();
+
     void                        RefreshStudyTableContents();
     void                        RefreshSeriesTableContents();
     void                        RefreshInformationTableContents();
 
 private slots:
-    void                        ToOpenFromFolder();
+    void                        ToLoadFromFolder();
+    void                        ToOpenDicomSeries();
     void                        ToClearOpenedDicom();
+
     void                        SelectStudyTable(const QModelIndex& index);
     void                        SelectSeriesTable(const QModelIndex& index);
     void                        SelectInformationTable(const QModelIndex& index);
