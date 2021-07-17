@@ -72,6 +72,13 @@ void StudyBrowser::ToOpenDicomSeries()
     const int series_index = GlobalState::study_browser_.select_series_index_;
     auto& instance_list = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].instance_list_;
 
+    qDebug() << "Instance size : " << instance_list.size();
+    for (const auto& i : instance_list)
+        qDebug() << "Instance num : " << i.instance_number_;
+
+    GlobalState::study_browser_.open_patient_index_ = patient_index;
+    GlobalState::study_browser_.open_study_index_ = study_index;
+    GlobalState::study_browser_.open_series_index_ = series_index;
 }
 
 void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list)
@@ -211,6 +218,9 @@ void StudyBrowser::ToClearOpenedDicom()
     GlobalState::study_browser_.select_patient_index_ = 0;
     GlobalState::study_browser_.select_series_index_ = 0;
     GlobalState::study_browser_.select_study_index_ = 0;
+    GlobalState::study_browser_.open_patient_index_ = 0;
+    GlobalState::study_browser_.open_study_index_ = 0;
+    GlobalState::study_browser_.open_series_index_ = 0;
     RefreshStudyTableContents();
     RefreshSeriesTableContents();
     RefreshInformationTableContents();

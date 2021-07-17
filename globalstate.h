@@ -27,9 +27,14 @@ namespace GlobalState
         Table               study_table_ = {{"Patient ID", "Patient Name", "Study Description"}, 0};
         Table               series_table_ = {{"Series No.", "Series Description"}, 0};
         Table               information_table_ = {{"Description", "Value"}, -1};
+
         int                 select_patient_index_ = 0;
         int                 select_study_index_ = 0;
         int                 select_series_index_ = 0;
+
+        int                 open_patient_index_ = 0;
+        int                 open_study_index_ = 0;
+        int                 open_series_index_ = 0;
     };
     static StudyBrowser     study_browser_;
 };
