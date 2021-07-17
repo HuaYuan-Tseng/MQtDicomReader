@@ -4,6 +4,7 @@
 #include <QMessageBox>
 
 #include "tableoperate.h"
+#include "dcmlistthread.h"
 #include "dcmlayer.h"
 #include "dcmio.h"
 
@@ -33,6 +34,8 @@ StudyBrowser::~StudyBrowser()
 
 void StudyBrowser::ToLoadFromFolder()
 {
+    if (is_opening) return;
+
     GlobalState::study_browser_.open_dir_ =
             QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
                                               "/Users/huayuan/Documents/Dev/Dicom",
@@ -43,19 +46,25 @@ void StudyBrowser::ToLoadFromFolder()
     qDebug() << "Open Path : " << GlobalState::study_browser_.open_dir_;
 
     DcmIO* dcmio = new DcmIO();
+    DcmListThread* thread = new DcmListThread(GlobalState::study_browser_.open_dir_,
+                                              GlobalState::study_browser_.dcm_list_);
+
+    QObject::connect(thread, SIGNAL(startToLoadFromFolder(QString&, DcmContent&)), dcmio, SLOT(LoadFromFolder(QString& , DcmContent&)));
     QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
-    if (dcmio->LoadFromFolder(GlobalState::study_browser_.open_dir_, GlobalState::study_browser_.dcm_list_))
-    {
-        RefreshStudyTableContents();
-        RefreshSeriesTableContents();
-        RefreshInformationTableContents();
-    }
-    QObject::disconnect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
-    delete dcmio;
+    QObject::connect(dcmio, SIGNAL(send(QString&, DcmContent&)), this, SLOT(ReceiveFromOtherThreadDcmIO(QString&, DcmContent&)));
+    QObject::connect(dcmio, SIGNAL(finish()), this, SLOT(RefreshAllTable()));
+    QObject::connect(dcmio, SIGNAL(finish()), dcmio, SLOT(deleteLater()));
+    QObject::connect(dcmio, SIGNAL(destroyed(QObject*)), thread, SLOT(quit()));
+    QObject::connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+
+    is_opening = true;
+    dcmio->moveToThread(thread);
+    thread->start();
 }
 
 void StudyBrowser::ToOpenDicomSeries()
 {
+    if (is_opening) return;
     if (GlobalState::study_browser_.dcm_list_.empty()) return;
 
     const int patient_index = GlobalState::study_browser_.select_patient_index_;
@@ -63,6 +72,20 @@ void StudyBrowser::ToOpenDicomSeries()
     const int series_index = GlobalState::study_browser_.select_series_index_;
     auto& instance_list = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].instance_list_;
 
+}
+
+void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list)
+{
+    GlobalState::study_browser_.open_dir_ = path;
+    GlobalState::study_browser_.dcm_list_ = list;
+    is_opening = false;
+}
+
+void StudyBrowser::RefreshAllTable()
+{
+    RefreshStudyTableContents();
+    RefreshSeriesTableContents();
+    RefreshInformationTableContents();
 }
 
 void StudyBrowser::RefreshStudyTableContents()
@@ -179,6 +202,7 @@ void StudyBrowser::SelectInformationTable(const QModelIndex& index)
 
 void StudyBrowser::ToClearOpenedDicom()
 {
+    if (is_opening) return;
     GlobalState::study_browser_.open_dir_.clear();
     GlobalState::study_browser_.dcm_list_.clear();
     GlobalState::study_browser_.study_table_.select_index = 0;
@@ -229,18 +253,3 @@ void StudyBrowser::SetInformationTableHeader()
     ui_->table_information->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
 }
 
-/*
- *  //Test Dicom Layer
-    auto& list = GlobalState::study_browser_.dcm_list_;
-    qDebug() << "Patient Count : " << list.size();
-    for (int i = 0; i < list.size(); ++i)
-    {
-        qDebug() << "Patient " << i << " : Study Size : " << list[i].study_list_.size();
-        for (int j = 0; j < list[i].study_list_.size(); ++j)
-        {
-            qDebug() << "Study " << j << " : Series Size : " << list[i].study_list_[j].series_list_.size();
-            for (int k = 0; k < list[i].study_list_[j].series_list_.size(); ++k)
-                qDebug() << "Series " << k << " : Instance Size : " << list[i].study_list_[j].series_list_[k].instance_list_.size();
-        }
-    }
-*/

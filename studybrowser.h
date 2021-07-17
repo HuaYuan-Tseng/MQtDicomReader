@@ -31,12 +31,19 @@ private slots:
     void                        ToOpenDicomSeries();
     void                        ToClearOpenedDicom();
 
+    void                        RefreshAllTable();
     void                        SelectStudyTable(const QModelIndex& index);
     void                        SelectSeriesTable(const QModelIndex& index);
     void                        SelectInformationTable(const QModelIndex& index);
 
+    // while this slot receive signal, represent that "LoadFromFolder" is finish.
+    void                        ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list);
+
 public:
     Ui::StudyBrowser*           ui_;
+
+private:
+    bool                        is_opening = false;
 
 };
 

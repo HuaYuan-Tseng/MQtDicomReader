@@ -5,6 +5,7 @@
 #include <QFileInfoList>
 
 #include "dcmlayer.h"
+#include "globalstate.h"
 
 class DcmIO : public QObject
 {
@@ -13,14 +14,17 @@ public:
     DcmIO(QObject* parent = nullptr);
     ~DcmIO();
 
-    bool                LoadFromFolder(QString path, DcmContent& list);
-
 private:
     QFileInfoList       SearchFilesFromAllFolders(QString path);
     void                GetDcmDataset(QString path, DcmContent& list);
 
+public slots:
+    bool                LoadFromFolder(QString& path, DcmContent& list);
+
 signals:
-    void                progress(int);      // loading progress
+    void                send(QString& path, DcmContent& list);  // send data from dcmio's thread
+    void                progress(int);                          // loading progress
+    void                finish();
 };
 
 #endif // DCMIO_H

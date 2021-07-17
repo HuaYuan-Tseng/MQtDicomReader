@@ -14,7 +14,7 @@ DcmIO::~DcmIO()
 {
 }
 
-bool DcmIO::LoadFromFolder(QString path, DcmContent &list)
+bool DcmIO::LoadFromFolder(QString& path, DcmContent& list)
 {
     if (path.isEmpty())
     {
@@ -31,6 +31,9 @@ bool DcmIO::LoadFromFolder(QString path, DcmContent &list)
         GetDcmDataset(files.at(i).absoluteFilePath(), list);
         emit progress(100 * (++progress_val) / file_count);
     }
+    emit send(path, list);
+    emit finish();
+
     qDebug() << "Load Folder success !";
     return true;
 }

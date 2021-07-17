@@ -11,6 +11,7 @@ CONFIG += c++14 \
 
 SOURCES += \
     dcmio.cpp \
+    dcmlistthread.cpp \
     main.cpp \
     mainwindow.cpp \
     studybrowser.cpp \
@@ -19,6 +20,7 @@ SOURCES += \
 HEADERS += \
     dcmio.h \
     dcmlayer.h \
+    dcmlistthread.h \
     globalstate.h \
     mainwindow.h \
     studybrowser.h \
@@ -63,3 +65,6 @@ LIBS += -L/usr/local/Cellar/dcmtk/3.6.6/lib\
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    Note

@@ -1,0 +1,32 @@
+StudyBrowser {
+
+// Open File From Folder
+//
+DcmIO* dcmio = new DcmIO();
+QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
+if (dcmio->LoadFromFolder(GlobalState::study_browser_.open_dir_, GlobalState::study_browser_.dcm_list_))
+{
+    RefreshStudyTableContents();
+    RefreshSeriesTableContents();
+    RefreshInformationTableContents();
+}
+QObject::disconnect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
+
+-------------------------------------------------------------------------------------------------------------
+
+//Test Dicom Layer
+//
+auto& list = GlobalState::study_browser_.dcm_list_;
+qDebug() << "Patient Count : " << list.size();
+for (int i = 0; i < list.size(); ++i)
+{
+    qDebug() << "Patient " << i << " : Study Size : " << list[i].study_list_.size();
+    for (int j = 0; j < list[i].study_list_.size(); ++j)
+    {
+        qDebug() << "Study " << j << " : Series Size : " << list[i].study_list_[j].series_list_.size();
+        for (int k = 0; k < list[i].study_list_[j].series_list_.size(); ++k)
+            qDebug() << "Series " << k << " : Instance Size : " << list[i].study_list_[j].series_list_[k].instance_list_.size();
+    }
+}
+
+}
