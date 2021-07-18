@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "dcmlayer.h"
+#include "dcmdataset.h"
 
 enum MainStackedWidget
 {
@@ -23,6 +24,7 @@ namespace GlobalState
     public:
         QString             open_dir_ = "";
         DcmContent          dcm_list_ = {};
+        DcmDataSet          dcm_data_set_;
 
         Table               study_table_ = {{"Patient ID", "Patient Name", "Study Description"}, 0};
         Table               series_table_ = {{"Series No.", "Series Description"}, 0};

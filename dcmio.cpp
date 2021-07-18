@@ -5,6 +5,9 @@
 #include <cstdio>
 #include <dcmtk/ofstd/ofcond.h>
 #include <dcmtk/dcmdata/dctk.h>
+#include <dcmtk/dcmjpeg/djdecode.h>
+#include <dcmtk/dcmdata/dcrledrg.h>
+#include <dcmtk/dcmimgle/dcmimage.h>
 
 DcmIO::DcmIO(QObject *parent) : QObject(parent)
 {
@@ -28,7 +31,7 @@ bool DcmIO::LoadFromFolder(QString& path, DcmContent& list)
 
     for (int i = 0; i < file_count; ++i)
     {
-        GetDcmDataset(files.at(i).absoluteFilePath(), list);
+        GetDcmMetaData(files.at(i).absoluteFilePath(), list);
         emit progress(100 * (++progress_val) / file_count);
     }
     emit send(path, list);
@@ -38,7 +41,7 @@ bool DcmIO::LoadFromFolder(QString& path, DcmContent& list)
     return true;
 }
 
-void DcmIO::GetDcmDataset(QString path, DcmContent& list)
+void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
 {
     DcmFileFormat* format = new DcmFileFormat();
     OFCondition result = format->loadFile(OFFilename(path.toLocal8Bit()));
@@ -65,7 +68,7 @@ void DcmIO::GetDcmDataset(QString path, DcmContent& list)
     result = format->getDataset()->findAndGetOFString(DCM_InstanceNumber, str);
     instance.instance_number_ = (result.good()) ? std::stoi(str.c_str()) : -1;
     result = format->getDataset()->findAndGetOFString(DCM_NumberOfFrames, str);
-    instance.number_of_frame_ = (result.good()) ? std::stoi(str.c_str()) : 0;
+    instance.number_of_frame_ = (result.good()) ? std::stoi(str.c_str()) : 1;
 
     DcmSeries series;
     result = format->getDataset()->findAndGetOFString(DCM_SeriesInstanceUID, str);
@@ -137,6 +140,185 @@ void DcmIO::GetDcmDataset(QString path, DcmContent& list)
             return i1.instance_number_ < i2.instance_number_;
         });
     }
+
+    delete format;
+    return;
+}
+
+bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>& list, DcmDataSet& data_set)
+{
+    if (list.empty()) return false;
+
+    GetInstanceMetaData(list.at(0), data_set);
+    data_set.set_total_instances(static_cast<int>(list.size()));
+    int file_count = static_cast<int>(list.size());
+    int progress_val = 0;
+
+    emit progress(100 * (++progress_val) / (file_count + 1));
+    for (int i = 0; i < file_count; ++i)
+    {
+        GetInstanceDataSet(list.at(i), data_set);
+        emit progress(100 * (++progress_val) / (file_count + 1));
+    }
+    emit finish();
+
+    qDebug() << "Load Instacne Data Set success !";
+    return true;
+}
+
+void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set)
+{
+    DcmFileFormat* format = new DcmFileFormat();
+    OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
+    if (result.bad()) return;
+
+    std::string loss_less_trans_uid = "1.2.840.10008.1.2.4.70";
+    std::string loss_trans_uid = "1.2.840.10008.1.2.4.51";
+    std::string loss_less_p14 = "1.2.840.10008.1.2.4.57";
+    std::string lossy_p1 = "1.2.840.10008.1.2.4.50";
+    std::string lossy_rle = "1.2.840.10008.1.2.5";
+
+    bool is_compressed = false;
+    //E_TransferSyntax transfer = format->getDataset()->getOriginalXfer();
+
+    const char* syntax = nullptr;
+    format->getMetaInfo()->findAndGetString(DCM_TransferSyntaxUID, syntax);
+
+    if (syntax == nullptr)
+    {
+        is_compressed = false;
+    }
+    else
+    {
+        if (syntax == loss_less_trans_uid || syntax == loss_trans_uid ||
+                syntax == loss_less_p14 || syntax == lossy_p1)
+        {
+            DJDecoderRegistration::registerCodecs();
+            format->getDataset()->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
+            DJDecoderRegistration::cleanup();
+            is_compressed = true;
+        }
+        else if (syntax == lossy_rle)
+        {
+            DcmRLEDecoderRegistration::registerCodecs();
+            format->getDataset()->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
+            DcmRLEDecoderRegistration::cleanup();
+            is_compressed = true;
+        }
+    }
+
+    DicomImage* dcm_image = nullptr;
+    if (is_compressed)
+    {
+        dcm_image = new DicomImage((DcmObject*)(format->getDataset()),
+                                               format->getDataset()->getOriginalXfer(),
+                                               CIF_TakeOverExternalDataset);
+        if (dcm_image->getStatus() == EIS_Normal)
+        {
+            short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
+            data_set.set_instance_raw_data(img_ptr);
+        }
+    }
+    else
+    {
+        dcm_image = new DicomImage(format,
+                                   format->getDataset()->getOriginalXfer(),
+                                   CIF_TakeOverExternalDataset);
+        if (dcm_image->getStatus() == EIS_Normal)
+        {
+            short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
+            data_set.set_instance_raw_data(img_ptr);
+        }
+    }
+    delete dcm_image;
+}
+
+void DcmIO::GetInstanceMetaData(DcmInstance& instance, DcmDataSet& data_set)
+{
+    DcmFileFormat* format = new DcmFileFormat();
+    OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
+    if (result.bad()) return;
+
+    OFString str;   double value;
+    if (format->getDataset()->isEmpty()) return;
+
+    result = format->getDataset()->findAndGetOFString(DCM_PatientName, str);
+    if (result.good()) data_set.set_patient_name(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_PatientID, str);
+    if (result.good()) data_set.set_patient_id(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_StudyInstanceUID, str);
+    if (result.good()) data_set.set_study_instance_uid(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_StudyDescription, str);
+    if (result.good()) data_set.set_study_description(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_SeriesInstanceUID, str);
+    if (result.good()) data_set.set_series_instance_uid(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_SeriesDescription, str);
+    if (result.good()) data_set.set_series_description(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_SeriesNumber, str);
+    if (result.good()) data_set.set_series_number(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_SOPInstanceUID, str);
+    if (result.good()) data_set.set_sop_instance_uid(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_SOPClassUID, str);
+    if (result.good()) data_set.set_sop_class_uid(str.c_str());
+
+    result = format->getDataset()->findAndGetOFString(DCM_Rows, str);
+    if (result.good()) data_set.set_rows(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_Columns, str);
+    if (result.good()) data_set.set_cols(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_NumberOfFrames, str);
+    if (result.good()) data_set.set_frames_per_instance(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetFloat64(DCM_PixelSpacing, value, 0);
+    if (result.good()) data_set.set_spacing_x(value);
+
+    result = format->getDataset()->findAndGetFloat64(DCM_PixelSpacing, value, 1);
+    if (result.good()) data_set.set_spacing_y(value);
+
+    result = format->getDataset()->findAndGetOFString(DCM_SliceThickness, str);
+    if (result.good()) data_set.set_slice_thickness(std::stod(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_SpacingBetweenSlices, str);
+    if (result.good()) data_set.set_spacing_between_slice(std::stod(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_PixelRepresentation, str);
+    if (result.good()) data_set.set_pixel_representation(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_RescaleIntercept, str);
+    if (result.good()) data_set.set_rescale_intercept(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_RescaleSlope, str);
+    if (result.good()) data_set.set_rescale_slope(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_BitsAllocated, str);
+    if (result.good()) data_set.set_bits_allocated(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_BitsStored, str);
+    if (result.good()) data_set.set_bits_stored(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetOFString(DCM_HighBit, str);
+    if (result.good()) data_set.set_high_bit(std::stoi(str.c_str()));
+
+    result = format->getDataset()->findAndGetFloat64(DCM_WindowWidth, value, 0);
+    if (result.good()) data_set.set_window_width(value);
+
+    result = format->getDataset()->findAndGetFloat64(DCM_WindowWidth, value, 1);
+    if (result.good()) data_set.set_window_width(value);
+
+    result = format->getDataset()->findAndGetFloat64(DCM_WindowCenter, value, 0);
+    if (result.good()) data_set.set_window_center(value);
+
+    result = format->getDataset()->findAndGetFloat64(DCM_WindowCenter, value, 1);
+    if (result.good()) data_set.set_window_center(value);
 
     delete format;
     return;
