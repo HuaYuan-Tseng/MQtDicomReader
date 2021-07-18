@@ -154,19 +154,29 @@ bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>& list, DcmDataSet& data
     int file_count = static_cast<int>(list.size());
     int progress_val = 0;
 
+    std::vector<double> location_list;
+    location_list.reserve(list.size());
     emit progress(100 * (++progress_val) / (file_count + 1));
     for (int i = 0; i < file_count; ++i)
     {
-        GetInstanceDataSet(list.at(i), data_set);
+        double location = 0.0;
+        GetInstanceDataSet(list.at(i), data_set, location);
+        location_list.push_back(location);
         emit progress(100 * (++progress_val) / (file_count + 1));
     }
+    if (!location_list.empty() &&
+            std::abs(location_list[0] - location_list[1]) == std::abs(location_list[1] - location_list[2]))
+    {
+        data_set.set_spacing_z(std::abs(location_list[0] - location_list[1]));
+    }
+    emit send(data_set);
     emit finish();
 
     qDebug() << "Load Instacne Data Set success !";
     return true;
 }
 
-void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set)
+void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, double& location)
 {
     DcmFileFormat* format = new DcmFileFormat();
     OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
@@ -178,9 +188,14 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set)
     std::string lossy_p1 = "1.2.840.10008.1.2.4.50";
     std::string lossy_rle = "1.2.840.10008.1.2.5";
 
-    bool is_compressed = false;
     //E_TransferSyntax transfer = format->getDataset()->getOriginalXfer();
 
+    OFString str;
+    result = format->getDataset()->findAndGetOFString(DCM_SliceLocation, str);
+    if (result.good())  location = std::stod(str.c_str());
+    else                location = 0.0;
+
+    bool is_compressed = false;
     const char* syntax = nullptr;
     format->getMetaInfo()->findAndGetString(DCM_TransferSyntaxUID, syntax);
 
@@ -319,6 +334,14 @@ void DcmIO::GetInstanceMetaData(DcmInstance& instance, DcmDataSet& data_set)
 
     result = format->getDataset()->findAndGetFloat64(DCM_WindowCenter, value, 1);
     if (result.good()) data_set.set_window_center(value);
+
+    if (data_set.window_width().empty() || data_set.window_center().empty())
+    {
+        int width = std::pow(2, data_set.bits_allocated());
+        int center = width / 2;
+        data_set.set_window_width(width);
+        data_set.set_window_center(center);
+    }
 
     delete format;
     return;

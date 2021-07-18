@@ -3,7 +3,10 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+#include <opencv2/opencv.hpp>
+
 #include "tableoperate.h"
+#include "dcmdatasetthread.h"
 #include "dcmlistthread.h"
 #include "dcmdataset.h"
 #include "dcmlayer.h"
@@ -74,18 +77,40 @@ void StudyBrowser::ToOpenDicomSeries()
     auto& instance_list = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].instance_list_;
 
     DcmIO* dcmio = new DcmIO();
-    dcmio->LoadInstanceDataSet(instance_list, GlobalState::study_browser_.dcm_data_set_);
-    qDebug() << "Patient name : " << GlobalState::study_browser_.dcm_data_set_.patient_name();
+    DcmDatasetThread* thread = new DcmDatasetThread(instance_list, GlobalState::study_browser_.dcm_data_set_);
+
+    QObject::connect(thread, SIGNAL(startToLoadInstanceDataSet(std::vector<DcmInstance>&, DcmDataSet&)), dcmio, SLOT(LoadInstanceDataSet(std::vector<DcmInstance>&, DcmDataSet&)));
+    QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
+    QObject::connect(dcmio, SIGNAL(send(DcmDataSet&)), this, SLOT(ReceiveFromOtherThreadDcmIO(DcmDataSet&)));
+    QObject::connect(dcmio, SIGNAL(finish()), dcmio, SLOT(deleteLater()));
+    QObject::connect(dcmio, SIGNAL(destroyed(QObject*)), thread, SLOT(quit()));
+    QObject::connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
 
     GlobalState::study_browser_.open_patient_index_ = patient_index;
     GlobalState::study_browser_.open_study_index_ = study_index;
     GlobalState::study_browser_.open_series_index_ = series_index;
+
+    is_opening = true;
+    dcmio->moveToThread(thread);
+    thread->start();
 }
 
 void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list)
 {
     GlobalState::study_browser_.open_dir_ = path;
     GlobalState::study_browser_.dcm_list_ = list;
+    is_opening = false;
+}
+void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set)
+{
+    GlobalState::study_browser_.dcm_data_set_ = data_set;
+
+    qDebug() << "Instance Pixel Data List size : " << data_set.instance_pixel_data_list_.size();
+    qDebug() << "Instance Raw   Data List size : " << data_set.instance_raw_data_list_.size();
+    qDebug() << "Total Slice : " << data_set.total_instances();
+    cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(100));
+    cv::imshow("src", src);
+
     is_opening = false;
 }
 

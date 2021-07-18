@@ -1,5 +1,4 @@
 #include "dcmdataset.h"
-#include <cmath>
 
 DcmDataSet::DcmDataSet()
 {
@@ -132,20 +131,13 @@ void DcmDataSet::ConvertRawData2PixelData()
 {
     if (pixel_data_window_width_ == INT_MAX || pixel_data_window_center_ == INT_MAX)
     {
-        if (window_width_.empty() || window_center_.empty())
-        {
-            int width = std::pow(2, bits_allocated());
-            int center = width / 2;
-            set_window_width(width);
-            set_window_center(center);
-        }
         pixel_data_window_width_ = window_width()[0];
         pixel_data_window_center_ = window_center()[0];
     }
 
     if (!instance_pixel_data_list_.empty())
     {
-        for (auto& ptr : instance_pixel_data_list_)
+        for (auto ptr : instance_pixel_data_list_)
             delete[] ptr;
     }
 
@@ -156,16 +148,18 @@ void DcmDataSet::ConvertRawData2PixelData()
     const double    win_low = wc - 0.5 - (ww - 1) / 2;
     const double    win_high = wc - 0.5 + (ww - 1) / 2;
     const int       img_size = rows() * cols();
+    const int       total_instance = total_instances();
 
-    for (auto& raw : instance_raw_data_list_)
+    for (int i = 0; i < total_instance; ++i)
     {
+        short* raw = instance_raw_data_list_.at(i);
         uchar* img = new uchar[img_size];
         uchar* ptr = img;
 
-        int i = 0;
-        while (i < img_size)
+        int n = 0;
+        while (n < img_size)
         {
-            i++;
+            n++;
             short HU = *raw++;
             HU = HU * slope + intercept;
 

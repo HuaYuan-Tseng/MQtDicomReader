@@ -38,6 +38,7 @@ private slots:
 
     // while this slot receive signal, represent that "LoadFromFolder" is finish.
     void                        ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list);
+    void                        ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set);
 
 public:
     Ui::StudyBrowser*           ui_;

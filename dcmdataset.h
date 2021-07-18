@@ -136,6 +136,8 @@ private:
 
     std::vector<int>    window_width_ = {};
     std::vector<int>    window_center_ = {};
+
+public:
     std::vector<short*> instance_raw_data_list_ = {};       // for input
     std::vector<uchar*> instance_pixel_data_list_ = {};     // for output
 
