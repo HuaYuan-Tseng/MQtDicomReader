@@ -230,8 +230,12 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
                                                CIF_TakeOverExternalDataset);
         if (dcm_image->getStatus() == EIS_Normal)
         {
+            // getOutputDataSize() is just for single frame.
+            const ulong size = dcm_image->getOutputDataSize(data_set.bits_stored());
             short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
-            data_set.set_instance_raw_data(img_ptr);
+            short* dst_ptr = new short[size * data_set.frames_per_instance()];
+            std::memcpy(dst_ptr, img_ptr, size * data_set.frames_per_instance());
+            data_set.set_instance_raw_data(dst_ptr);
         }
     }
     else
@@ -241,8 +245,12 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
                                    CIF_TakeOverExternalDataset);
         if (dcm_image->getStatus() == EIS_Normal)
         {
+            // getOutputDataSize() is just for single frame.
+            const ulong size = dcm_image->getOutputDataSize(data_set.bits_stored());
             short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
-            data_set.set_instance_raw_data(img_ptr);
+            short* dst_ptr = new short[size * data_set.frames_per_instance()];
+            std::memcpy(dst_ptr, img_ptr, size * data_set.frames_per_instance());
+            data_set.set_instance_raw_data(dst_ptr);
         }
     }
     delete dcm_image;

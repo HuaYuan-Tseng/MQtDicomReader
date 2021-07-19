@@ -104,13 +104,6 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list)
 void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set)
 {
     GlobalState::study_browser_.dcm_data_set_ = data_set;
-
-    qDebug() << "Instance Pixel Data List size : " << data_set.instance_pixel_data_list_.size();
-    qDebug() << "Instance Raw   Data List size : " << data_set.instance_raw_data_list_.size();
-    qDebug() << "Total Slice : " << data_set.total_instances();
-    cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(100));
-    cv::imshow("src", src);
-
     is_opening = false;
 }
 

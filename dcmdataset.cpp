@@ -120,11 +120,17 @@ void DcmDataSet::TransformPixelData() { ConvertRawData2PixelData(); }
 
 void DcmDataSet::set_instance_raw_data(short* raw) { instance_raw_data_list_.push_back(raw); }
 
+short* DcmDataSet::get_instance_raw_data(const int slice)
+{
+    if (slice < 0 || slice >= total_instances_) return nullptr;
+    return instance_raw_data_list_[slice];
+}
+
 uchar* DcmDataSet::get_instance_pixel_data(const int slice)
 {
     if (instance_pixel_data_list_.empty()) ConvertRawData2PixelData();
     if (slice < 0 || slice >= total_instances_) return nullptr;
-    return instance_pixel_data_list_.at(slice);
+    return instance_pixel_data_list_[slice];
 }
 
 void DcmDataSet::ConvertRawData2PixelData()
@@ -139,6 +145,8 @@ void DcmDataSet::ConvertRawData2PixelData()
     {
         for (auto ptr : instance_pixel_data_list_)
             delete[] ptr;
+        instance_pixel_data_list_.clear();
+        instance_pixel_data_list_.shrink_to_fit();
     }
 
     const double    slope = rescale_slope();

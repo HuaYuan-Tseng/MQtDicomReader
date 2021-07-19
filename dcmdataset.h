@@ -94,6 +94,7 @@ public:
 
     void                        TransformPixelData();
     void                        set_instance_raw_data(short* raw);
+    short*                      get_instance_raw_data(const int slice);
     uchar*                      get_instance_pixel_data(const int slice);
 
 
@@ -137,7 +138,6 @@ private:
     std::vector<int>    window_width_ = {};
     std::vector<int>    window_center_ = {};
 
-public:
     std::vector<short*> instance_raw_data_list_ = {};       // for input
     std::vector<uchar*> instance_pixel_data_list_ = {};     // for output
 
