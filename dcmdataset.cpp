@@ -120,17 +120,34 @@ void DcmDataSet::TransformPixelData() { ConvertRawData2PixelData(); }
 
 void DcmDataSet::set_instance_raw_data(short* raw) { instance_raw_data_list_.push_back(raw); }
 
-short* DcmDataSet::get_instance_raw_data(const int slice)
+short* DcmDataSet::get_instance_raw_data(const int& slice) const
 {
     if (slice < 0 || slice >= total_instances_) return nullptr;
     return instance_raw_data_list_[slice];
 }
 
-uchar* DcmDataSet::get_instance_pixel_data(const int slice)
+short* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
 {
-    if (instance_pixel_data_list_.empty()) ConvertRawData2PixelData();
+    if (slice < 0 || slice >= total_instances_) return nullptr;
+    if (frame < 0 || frame >= frames_per_instance_) return nullptr;
+    return instance_raw_data_list_[slice] + frame * rows_ * cols_;
+}
+
+uchar* DcmDataSet::get_instance_pixel_data(const int& slice) const
+{
+    if (instance_pixel_data_list_.empty())
+        const_cast<DcmDataSet*>(this)->ConvertRawData2PixelData();
     if (slice < 0 || slice >= total_instances_) return nullptr;
     return instance_pixel_data_list_[slice];
+}
+
+uchar* DcmDataSet::get_frame_pixel_data(const int& slice, const int& frame) const
+{
+    if (instance_pixel_data_list_.empty())
+        const_cast<DcmDataSet*>(this)->ConvertRawData2PixelData();
+    if (slice < 0 || slice >= total_instances_) return nullptr;
+    if (frame < 0 || frame >= frames_per_instance_) return nullptr;
+    return instance_pixel_data_list_[slice] + frame * rows_ * cols_;
 }
 
 void DcmDataSet::ConvertRawData2PixelData()
@@ -155,8 +172,8 @@ void DcmDataSet::ConvertRawData2PixelData()
     const double    wc = pixel_data_window_center();
     const double    win_low = wc - 0.5 - (ww - 1) / 2;
     const double    win_high = wc - 0.5 + (ww - 1) / 2;
-    const int       img_size = rows() * cols();
     const int       total_instance = total_instances();
+    const int       img_size = rows() * cols() * frames_per_instance();
 
     for (int i = 0; i < total_instance; ++i)
     {

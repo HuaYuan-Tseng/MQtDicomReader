@@ -94,8 +94,10 @@ public:
 
     void                        TransformPixelData();
     void                        set_instance_raw_data(short* raw);
-    short*                      get_instance_raw_data(const int slice);
-    uchar*                      get_instance_pixel_data(const int slice);
+    short*                      get_instance_raw_data(const int& slice) const;
+    uchar*                      get_instance_pixel_data(const int& slice) const;
+    short*                      get_frame_raw_data(const int& slice, const int& frame) const;
+    uchar*                      get_frame_pixel_data(const int& slice, const int& frame) const;
 
 
 private:
