@@ -28,7 +28,7 @@
       <number>0</number>
      </property>
      <item>
-      <layout class="QHBoxLayout" name="mainwindow_up_layout" stretch="0,0,0">
+      <layout class="QHBoxLayout" name="mainwindow_up_layout" stretch="0,0,0,0">
        <property name="spacing">
         <number>6</number>
        </property>
@@ -70,6 +70,32 @@
          </property>
          <property name="text">
           <string>Browse</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="menuButton_image_viewer_1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>60</horstretch>
+           <verstretch>60</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>60</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Viewer1</string>
          </property>
         </widget>
        </item>

@@ -5,6 +5,7 @@
 
 #include "globalstate.h"
 #include "studybrowser.h"
+#include "imageviewer1.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,11 +22,13 @@ public:
 private slots :
     void                                ToExitApp();
     void                                ToStudyBrowser();
+    void                                ToImageViewer1();
 
 
 private:
     Ui::MainWindow*                     ui_;
     StudyBrowser*                       study_browser_ = nullptr;
+    ImageViewer1*                       image_viewer_1_ = nullptr;
 
 };
 #endif // MAINWINDOW_H

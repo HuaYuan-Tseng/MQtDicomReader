@@ -106,6 +106,8 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set)
 {
     GlobalState::study_browser_.dcm_data_set_ = data_set;
     is_opening = false;
+
+    emit SwitchToImageViewer1();
 }
 
 void StudyBrowser::RefreshAllTable()

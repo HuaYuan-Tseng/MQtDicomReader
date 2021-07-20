@@ -36,9 +36,12 @@ private slots:
     void                        SelectSeriesTable(const QModelIndex& index);
     void                        SelectInformationTable(const QModelIndex& index);
 
-    // while this slot receive signal, represent that "LoadFromFolder" is finish.
+    // while this slot receive signal, represent that "LoadFromFolder" or "Open Series" is finish.
     void                        ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list);
     void                        ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set);
+
+signals:
+    void                        SwitchToImageViewer1();
 
 public:
     Ui::StudyBrowser*           ui_;

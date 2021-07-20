@@ -14,6 +14,7 @@ SOURCES += \
     dcmdatasetthread.cpp \
     dcmio.cpp \
     dcmlistthread.cpp \
+    imageviewer1.cpp \
     main.cpp \
     mainwindow.cpp \
     studybrowser.cpp \
@@ -26,11 +27,13 @@ HEADERS += \
     dcmlayer.h \
     dcmlistthread.h \
     globalstate.h \
+    imageviewer1.h \
     mainwindow.h \
     studybrowser.h \
     tableoperate.h
 
 FORMS += \
+    imageviewer1.ui \
     mainwindow.ui \
     studybrowser.ui
 

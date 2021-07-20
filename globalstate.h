@@ -9,7 +9,8 @@
 
 enum MainStackedWidget
 {
-    STUDY_BROWSER
+    STUDY_BROWSER,
+    IMAGE_VIEWER_1
 };
 
 struct Table
@@ -39,6 +40,11 @@ namespace GlobalState
         int                 open_series_index_ = 0;
     };
     static StudyBrowser     study_browser_;
+
+    class ImageViewer1 {
+    public:
+    };
+    //static ImageViewer1     image_viewer_1_;
 };
 
 #endif // GLOBALSTATE_H
