@@ -207,3 +207,37 @@ void DcmDataSet::ConvertRawData2PixelData()
     }
 
 }
+
+void DcmDataSet::ClearAll()
+{
+    rows_ = 1;
+    cols_ = 1;
+    total_instances_ = 1;
+    frames_per_instance_ = 1;
+    spacing_x_ = 0.0;
+    spacing_y_ = 0.0;
+    spacing_z_ = 0.0;
+    slice_thickness_ = 0.0;
+    spacing_between_slice_ = 0.0;
+    pixel_representation_ = 0;
+    rescale_intercept_ = 0;
+    rescale_slope_ = 1;
+    bits_allocated_ = 0;
+    bits_stored_ = 0;
+    high_bit_ = 0;
+
+    pixel_data_window_width_ = INT_MAX;
+    pixel_data_window_center_ = INT_MAX;
+    window_width_.clear();
+    window_width_.shrink_to_fit();
+    window_center_.clear();
+    window_center_.shrink_to_fit();
+
+    for (auto& ptr : instance_raw_data_list_) delete[] ptr;
+    instance_raw_data_list_.clear();
+    instance_raw_data_list_.shrink_to_fit();
+
+    for (auto& ptr : instance_pixel_data_list_) delete[] ptr;
+    instance_pixel_data_list_.clear();
+    instance_pixel_data_list_.shrink_to_fit();
+}

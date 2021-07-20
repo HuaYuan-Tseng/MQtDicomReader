@@ -7,6 +7,7 @@
 class DcmDataSet {
 public:
     DcmDataSet();
+    void                        ClearAll();
 
     void                        set_patient_name(const QString& name);
     QString                     patient_name() const;
@@ -98,7 +99,6 @@ public:
     uchar*                      get_instance_pixel_data(const int& slice) const;
     short*                      get_frame_raw_data(const int& slice, const int& frame) const;
     uchar*                      get_frame_pixel_data(const int& slice, const int& frame) const;
-
 
 private:
     // Basic Information

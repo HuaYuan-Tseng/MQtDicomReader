@@ -70,6 +70,7 @@ void StudyBrowser::ToOpenDicomSeries()
 {
     if (is_opening) return;
     if (GlobalState::study_browser_.dcm_list_.empty()) return;
+    GlobalState::study_browser_.dcm_data_set_.ClearAll();
 
     const int patient_index = GlobalState::study_browser_.select_patient_index_;
     const int study_index = GlobalState::study_browser_.select_study_index_;
@@ -231,6 +232,7 @@ void StudyBrowser::ToClearOpenedDicom()
     if (is_opening) return;
     GlobalState::study_browser_.open_dir_.clear();
     GlobalState::study_browser_.dcm_list_.clear();
+    GlobalState::study_browser_.dcm_data_set_.ClearAll();
     GlobalState::study_browser_.study_table_.select_index = 0;
     GlobalState::study_browser_.series_table_.select_index = 0;
     GlobalState::study_browser_.information_table_.select_index = -1;
