@@ -2,6 +2,7 @@
 #include "ui_studybrowser.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QDebug>
 
 #include <opencv2/opencv.hpp>
 
@@ -53,9 +54,9 @@ void StudyBrowser::ToLoadFromFolder()
     DcmListThread* thread = new DcmListThread(GlobalState::study_browser_.open_dir_,
                                               GlobalState::study_browser_.dcm_list_);
 
-    QObject::connect(thread, SIGNAL(startToLoadFromFolder(QString&, DcmContent&)), dcmio, SLOT(LoadFromFolder(QString& , DcmContent&)));
+    QObject::connect(thread, SIGNAL(startToLoadFromFolder(QString*, DcmContent*)), dcmio, SLOT(LoadFromFolder(QString*, DcmContent*)));
     QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
-    QObject::connect(dcmio, SIGNAL(send(QString&, DcmContent&)), this, SLOT(ReceiveFromOtherThreadDcmIO(QString&, DcmContent&)));
+    QObject::connect(dcmio, SIGNAL(send(QString*, DcmContent*)), this, SLOT(ReceiveFromOtherThreadDcmIO(QString*, DcmContent*)));
     QObject::connect(dcmio, SIGNAL(finish()), this, SLOT(RefreshAllTable()));
     QObject::connect(dcmio, SIGNAL(finish()), dcmio, SLOT(deleteLater()));
     QObject::connect(dcmio, SIGNAL(destroyed(QObject*)), thread, SLOT(quit()));
@@ -80,9 +81,9 @@ void StudyBrowser::ToOpenDicomSeries()
     DcmIO* dcmio = new DcmIO();
     DcmDatasetThread* thread = new DcmDatasetThread(instance_list, GlobalState::study_browser_.dcm_data_set_);
 
-    QObject::connect(thread, SIGNAL(startToLoadInstanceDataSet(std::vector<DcmInstance>&, DcmDataSet&)), dcmio, SLOT(LoadInstanceDataSet(std::vector<DcmInstance>&, DcmDataSet&)));
+    QObject::connect(thread, SIGNAL(startToLoadInstanceDataSet(std::vector<DcmInstance>*, DcmDataSet*)), dcmio, SLOT(LoadInstanceDataSet(std::vector<DcmInstance>*, DcmDataSet*)));
     QObject::connect(dcmio, SIGNAL(progress(int)), ui_->progressbar, SLOT(setValue(int)));
-    QObject::connect(dcmio, SIGNAL(send(DcmDataSet&)), this, SLOT(ReceiveFromOtherThreadDcmIO(DcmDataSet&)));
+    QObject::connect(dcmio, SIGNAL(send(DcmDataSet*)), this, SLOT(ReceiveFromOtherThreadDcmIO(DcmDataSet*)));
     QObject::connect(dcmio, SIGNAL(finish()), dcmio, SLOT(deleteLater()));
     QObject::connect(dcmio, SIGNAL(destroyed(QObject*)), thread, SLOT(quit()));
     QObject::connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
@@ -96,17 +97,21 @@ void StudyBrowser::ToOpenDicomSeries()
     thread->start();
 }
 
-void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list)
+void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString* path, DcmContent* list)
 {
-    GlobalState::study_browser_.open_dir_ = path;
-    GlobalState::study_browser_.dcm_list_ = list;
+    GlobalState::study_browser_.open_dir_ = *path;
+    GlobalState::study_browser_.dcm_list_ = *list;
     is_opening = false;
 }
-void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set)
+void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set)
 {
-    GlobalState::study_browser_.dcm_data_set_ = data_set;
+    GlobalState::study_browser_.dcm_data_set_ = *data_set;
     is_opening = false;
 
+    //cv::Mat src(data_set->rows(), data_set->cols(), CV_8UC1, data_set->get_frame_pixel_data(0, 100));
+    //cv::imshow("src", src);
+
+    emit StartToSetupImageViewer1();
     emit SwitchToImageViewer1();
 }
 

@@ -9,5 +9,5 @@ DcmDatasetThread::DcmDatasetThread(std::vector<DcmInstance>& instance_list, DcmD
 
 void DcmDatasetThread::run()
 {
-    emit startToLoadInstanceDataSet(instance_list_, data_set_);
+    emit startToLoadInstanceDataSet(&instance_list_, &data_set_);
 }

@@ -17,21 +17,21 @@ DcmIO::~DcmIO()
 {
 }
 
-bool DcmIO::LoadFromFolder(QString& path, DcmContent& list)
+bool DcmIO::LoadFromFolder(QString* path, DcmContent* list)
 {
-    if (path.isEmpty())
+    if (path->isEmpty())
     {
         qDebug() << "Folder path : " << path << " is invalid !";
         return false;
     }
 
-    QFileInfoList files = SearchFilesFromAllFolders(path);
+    QFileInfoList files = SearchFilesFromAllFolders(*path);
     int file_count = files.count();
     int progress_val = 0;
 
     for (int i = 0; i < file_count; ++i)
     {
-        GetDcmMetaData(files.at(i).absoluteFilePath(), list);
+        GetDcmMetaData(files.at(i).absoluteFilePath(), *list);
         emit progress(100 * (++progress_val) / file_count);
     }
     emit send(path, list);
@@ -145,29 +145,31 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
     return;
 }
 
-bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>& list, DcmDataSet& data_set)
+bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data_set)
 {
-    if (list.empty()) return false;
+    if (list->empty()) return false;
 
-    GetInstanceMetaData(list.at(0), data_set);
-    data_set.set_total_instances(static_cast<int>(list.size()));
-    int file_count = static_cast<int>(list.size());
+    GetInstanceMetaData(list->at(0), *data_set);
+    data_set->set_total_instances(static_cast<int>(list->size()));
+    int file_count = static_cast<int>(list->size());
     int progress_val = 0;
 
     std::vector<double> location_list;
-    location_list.reserve(list.size());
+    location_list.reserve(list->size());
     emit progress(100 * (++progress_val) / (file_count + 1));
+    qDebug() << progress_val;
     for (int i = 0; i < file_count; ++i)
     {
         double location = 0.0;
-        GetInstanceDataSet(list.at(i), data_set, location);
+        GetInstanceDataSet(list->at(i), *data_set, location);
         location_list.push_back(location);
         emit progress(100 * (++progress_val) / (file_count + 1));
+        qDebug() << progress_val;
     }
     if (!location_list.empty() &&
             std::abs(location_list[0] - location_list[1]) == std::abs(location_list[1] - location_list[2]))
     {
-        data_set.set_spacing_z(std::abs(location_list[0] - location_list[1]));
+        data_set->set_spacing_z(std::abs(location_list[0] - location_list[1]));
     }
     emit send(data_set);
     emit finish();
@@ -181,6 +183,7 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
     DcmFileFormat* format = new DcmFileFormat();
     OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
     if (result.bad()) return;
+    qDebug() << "DcmFileFormat LoadFile success";
 
     std::string loss_less_trans_uid = "1.2.840.10008.1.2.4.70";
     std::string loss_trans_uid = "1.2.840.10008.1.2.4.51";
@@ -221,6 +224,7 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
             is_compressed = true;
         }
     }
+    qDebug() << "Identify compress success";
 
     DicomImage* dcm_image = nullptr;
     if (is_compressed)
@@ -253,6 +257,7 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
             data_set.set_instance_raw_data(dst_ptr);
         }
     }
+    qDebug() << "DicomImage new success";
     delete dcm_image;
 }
 

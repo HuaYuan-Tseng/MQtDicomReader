@@ -44,7 +44,7 @@ namespace GlobalState
     class ImageViewer1 {
     public:
     };
-    //static ImageViewer1     image_viewer_1_;
+    static ImageViewer1     image_viewer_1_;
 };
 
 #endif // GLOBALSTATE_H

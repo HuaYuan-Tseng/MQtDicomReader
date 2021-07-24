@@ -1,6 +1,6 @@
 #include "dcmlistthread.h"
 
-DcmListThread::DcmListThread(QString& path, DcmContent& list) :
+DcmListThread::DcmListThread(const QString& path, const DcmContent& list) :
     path_(path),
     list_(list)
 {
@@ -8,5 +8,5 @@ DcmListThread::DcmListThread(QString& path, DcmContent& list) :
 
 void DcmListThread::run()
 {
-    emit startToLoadFromFolder(path_, list_);
+    emit startToLoadFromFolder(&path_, &list_);
 }

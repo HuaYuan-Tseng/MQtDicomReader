@@ -149,7 +149,7 @@ uchar* DcmDataSet::get_frame_pixel_data(const int& slice, const int& frame) cons
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
     return instance_pixel_data_list_[slice] + frame * rows_ * cols_;
 }
-
+#include <QDebug>
 void DcmDataSet::ConvertRawData2PixelData()
 {
     if (pixel_data_window_width_ == INT_MAX || pixel_data_window_center_ == INT_MAX)
@@ -174,6 +174,14 @@ void DcmDataSet::ConvertRawData2PixelData()
     const double    win_high = wc - 0.5 + (ww - 1) / 2;
     const int       total_instance = total_instances();
     const int       img_size = rows() * cols() * frames_per_instance();
+
+    qDebug() << "Total Instance : " << total_instance;
+    qDebug() << "Rows : " << rows_;
+    qDebug() << "Cols : " << cols_;
+    qDebug() << "Frames per instance : " << frames_per_instance_;
+    qDebug() << "Image Size : " << img_size;
+    qDebug() << "Display ww : " << pixel_data_window_width_;
+    qDebug() << "Display wc : " << pixel_data_window_center_;
 
     for (int i = 0; i < total_instance; ++i)
     {

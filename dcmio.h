@@ -23,12 +23,12 @@ private:
     void                GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, double& location);
 
 public slots:
-    bool                LoadFromFolder(QString& path, DcmContent& list);
-    bool                LoadInstanceDataSet(std::vector<DcmInstance>& list, DcmDataSet& data_set);
+    bool                LoadFromFolder(QString* path, DcmContent* list);
+    bool                LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data_set);
 
 signals:
-    void                send(DcmDataSet& data_set);
-    void                send(QString& path, DcmContent& list);  // send data from dcmio's thread
+    void                send(DcmDataSet* data_set);
+    void                send(QString* path, DcmContent* list);  // send data from dcmio's thread
     void                progress(int);                          // loading progress
     void                finish();
 };

@@ -37,10 +37,11 @@ private slots:
     void                        SelectInformationTable(const QModelIndex& index);
 
     // while this slot receive signal, represent that "LoadFromFolder" or "Open Series" is finish.
-    void                        ReceiveFromOtherThreadDcmIO(QString& path, DcmContent& list);
-    void                        ReceiveFromOtherThreadDcmIO(DcmDataSet& data_set);
+    void                        ReceiveFromOtherThreadDcmIO(QString* path, DcmContent* list);
+    void                        ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set);
 
 signals:
+    void                        StartToSetupImageViewer1();
     void                        SwitchToImageViewer1();
 
 public:

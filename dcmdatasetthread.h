@@ -16,7 +16,7 @@ protected:
     virtual void    run() override;
 
 signals:
-    void            startToLoadInstanceDataSet(std::vector<DcmInstance>& instance_list, DcmDataSet& data_set);
+    void            startToLoadInstanceDataSet(std::vector<DcmInstance>* instance_list, DcmDataSet* data_set);
 
 private:
     std::vector<DcmInstance>    instance_list_;

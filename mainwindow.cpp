@@ -18,13 +18,13 @@ MainWindow::MainWindow(QWidget *parent)
     image_viewer_1_ = new ImageViewer1();
     ui_->mainwindow_stacked_widget->insertWidget(MainStackedWidget::IMAGE_VIEWER_1, image_viewer_1_);
 
-    ui_->mainwindow_stacked_widget->setCurrentIndex(MainStackedWidget::STUDY_BROWSER);
-
     QObject::connect(ui_->menuButton_exit, SIGNAL(clicked()), this, SLOT(ToExitApp()));
     QObject::connect(ui_->menuButton_study_browser, SIGNAL(clicked()), this, SLOT(ToStudyBrowser()));
     QObject::connect(ui_->menuButton_image_viewer_1, SIGNAL(clicked()), this, SLOT(ToImageViewer1()));
     QObject::connect(study_browser_, SIGNAL(SwitchToImageViewer1()), this, SLOT(ToImageViewer1()));
+    QObject::connect(study_browser_, SIGNAL(StartToSetupImageViewer1()), image_viewer_1_, SLOT(SetupViewers()));
 
+    ui_->mainwindow_stacked_widget->setCurrentIndex(MainStackedWidget::STUDY_BROWSER);
 }
 
 MainWindow::~MainWindow()
