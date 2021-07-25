@@ -118,19 +118,20 @@ int DcmDataSet::pixel_data_window_center() const { return pixel_data_window_cent
 
 void DcmDataSet::TransformPixelData() { ConvertRawData2PixelData(); }
 
-void DcmDataSet::set_instance_raw_data(short* raw) { instance_raw_data_list_.push_back(raw); }
+void DcmDataSet::set_instance_raw_data(uchar* raw) { instance_raw_data_list_.push_back(raw); }
 
-short* DcmDataSet::get_instance_raw_data(const int& slice) const
+uchar* DcmDataSet::get_instance_raw_data(const int& slice) const
 {
     if (slice < 0 || slice >= total_instances_) return nullptr;
     return instance_raw_data_list_[slice];
 }
 
-short* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
+uchar* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
 {
     if (slice < 0 || slice >= total_instances_) return nullptr;
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
-    return instance_raw_data_list_[slice] + frame * rows_ * cols_;
+    const int offset = (bits_allocated() > 8) ? 2 : 1;
+    return instance_raw_data_list_[slice] + frame * rows_ * cols_ * offset;
 }
 
 uchar* DcmDataSet::get_instance_pixel_data(const int& slice) const
@@ -149,7 +150,7 @@ uchar* DcmDataSet::get_frame_pixel_data(const int& slice, const int& frame) cons
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
     return instance_pixel_data_list_[slice] + frame * rows_ * cols_;
 }
-#include <QDebug>
+
 void DcmDataSet::ConvertRawData2PixelData()
 {
     if (pixel_data_window_width_ == INT_MAX || pixel_data_window_center_ == INT_MAX)
@@ -172,20 +173,13 @@ void DcmDataSet::ConvertRawData2PixelData()
     const double    wc = pixel_data_window_center();
     const double    win_low = wc - 0.5 - (ww - 1) / 2;
     const double    win_high = wc - 0.5 + (ww - 1) / 2;
+    const int       bits_allocate = bits_allocated();
     const int       total_instance = total_instances();
     const int       img_size = rows() * cols() * frames_per_instance();
 
-    qDebug() << "Total Instance : " << total_instance;
-    qDebug() << "Rows : " << rows_;
-    qDebug() << "Cols : " << cols_;
-    qDebug() << "Frames per instance : " << frames_per_instance_;
-    qDebug() << "Image Size : " << img_size;
-    qDebug() << "Display ww : " << pixel_data_window_width_;
-    qDebug() << "Display wc : " << pixel_data_window_center_;
-
     for (int i = 0; i < total_instance; ++i)
     {
-        short* raw = instance_raw_data_list_.at(i);
+        uchar* raw = instance_raw_data_list_.at(i);
         uchar* img = new uchar[img_size];
         uchar* ptr = img;
 
@@ -193,7 +187,13 @@ void DcmDataSet::ConvertRawData2PixelData()
         while (n < img_size)
         {
             n++;
-            short HU = *raw++;
+            short HU = 0;
+            if (bits_allocate <= 8) HU = *raw++;
+            else
+            {
+                HU = (*(raw + 1) << 8) + *raw;
+                raw += 2;
+            }
             HU = HU * slope + intercept;
 
             if (HU <= win_low)

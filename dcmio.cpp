@@ -157,14 +157,12 @@ bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data
     std::vector<double> location_list;
     location_list.reserve(list->size());
     emit progress(100 * (++progress_val) / (file_count + 1));
-    qDebug() << progress_val;
     for (int i = 0; i < file_count; ++i)
     {
         double location = 0.0;
         GetInstanceDataSet(list->at(i), *data_set, location);
         location_list.push_back(location);
         emit progress(100 * (++progress_val) / (file_count + 1));
-        qDebug() << progress_val;
     }
     if (!location_list.empty() &&
             std::abs(location_list[0] - location_list[1]) == std::abs(location_list[1] - location_list[2]))
@@ -174,7 +172,6 @@ bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data
     emit send(data_set);
     emit finish();
 
-    qDebug() << "Load Instacne Data Set success !";
     return true;
 }
 
@@ -183,7 +180,6 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
     DcmFileFormat* format = new DcmFileFormat();
     OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
     if (result.bad()) return;
-    qDebug() << "DcmFileFormat LoadFile success";
 
     std::string loss_less_trans_uid = "1.2.840.10008.1.2.4.70";
     std::string loss_trans_uid = "1.2.840.10008.1.2.4.51";
@@ -224,7 +220,6 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
             is_compressed = true;
         }
     }
-    qDebug() << "Identify compress success";
 
     DicomImage* dcm_image = nullptr;
     if (is_compressed)
@@ -235,10 +230,16 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
         if (dcm_image->getStatus() == EIS_Normal)
         {
             // getOutputDataSize() is just for single frame.
-            const ulong size = dcm_image->getOutputDataSize(data_set.bits_stored());
-            short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
-            short* dst_ptr = new short[size * data_set.frames_per_instance()];
-            std::memcpy(dst_ptr, img_ptr, size * data_set.frames_per_instance());
+            const int frame_size = data_set.frames_per_instance();
+            const ulong img_size = dcm_image->getOutputDataSize(data_set.bits_stored());
+            uchar* dst_ptr = new uchar[frame_size * img_size];
+            
+            for (int i = 0; i < frame_size; ++i)
+            {
+                uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
+                std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+            }
+            
             data_set.set_instance_raw_data(dst_ptr);
         }
     }
@@ -250,14 +251,19 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
         if (dcm_image->getStatus() == EIS_Normal)
         {
             // getOutputDataSize() is just for single frame.
-            const ulong size = dcm_image->getOutputDataSize(data_set.bits_stored());
-            short* img_ptr = (short*)(dcm_image->getOutputData(data_set.bits_stored()));
-            short* dst_ptr = new short[size * data_set.frames_per_instance()];
-            std::memcpy(dst_ptr, img_ptr, size * data_set.frames_per_instance());
+            const int frame_size = data_set.frames_per_instance();
+            const ulong img_size = dcm_image->getOutputDataSize(data_set.bits_stored());
+            uchar* dst_ptr = new uchar[frame_size * img_size];
+            
+            for (int i = 0; i < frame_size; ++i)
+            {
+                uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
+                std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+            }
+            
             data_set.set_instance_raw_data(dst_ptr);
         }
     }
-    qDebug() << "DicomImage new success";
     delete dcm_image;
 }
 

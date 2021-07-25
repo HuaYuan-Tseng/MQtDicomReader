@@ -94,56 +94,56 @@ public:
     int                         pixel_data_window_center() const;
 
     void                        TransformPixelData();
-    void                        set_instance_raw_data(short* raw);
-    short*                      get_instance_raw_data(const int& slice) const;
+    void                        set_instance_raw_data(uchar* raw);
+    uchar*                      get_instance_raw_data(const int& slice) const;
     uchar*                      get_instance_pixel_data(const int& slice) const;
-    short*                      get_frame_raw_data(const int& slice, const int& frame) const;
+    uchar*                      get_frame_raw_data(const int& slice, const int& frame) const;
     uchar*                      get_frame_pixel_data(const int& slice, const int& frame) const;
 
 private:
     // Basic Information
     //
-    QString             patient_name_ = "";
-    QString             patient_id_ = "";
+    QString                     patient_name_ = "";
+    QString                     patient_id_ = "";
 
-    QString             study_instance_uid_ = "";
-    QString             study_description_ = "";
+    QString                     study_instance_uid_ = "";
+    QString                     study_description_ = "";
 
-    QString             series_instance_uid_ = "";
-    QString             series_description_ = "";
-    int                 series_number_ = -1;
+    QString                     series_instance_uid_ = "";
+    QString                     series_description_ = "";
+    int                         series_number_ = -1;
 
-    QString             sop_instance_uid_ = "";
-    QString             sop_class_uid_ = "";
+    QString                     sop_instance_uid_ = "";
+    QString                     sop_class_uid_ = "";
 
     // Image Information
     //
-    int                 rows_ = 1;
-    int                 cols_ = 1;
-    int                 total_instances_ = 1;
-    int                 frames_per_instance_ = 1;
-    double              spacing_x_ = 0.0;
-    double              spacing_y_ = 0.0;
-    double              spacing_z_ = 0.0;                   // calculate by slice location
-    double              slice_thickness_ = 0.0;
-    double              spacing_between_slice_ = 0.0;
-    int                 pixel_representation_ = 0;
-    int                 rescale_intercept_ = 0;
-    int                 rescale_slope_ = 1;
-    int                 bits_allocated_ = 0;
-    int                 bits_stored_ = 0;
-    int                 high_bit_ = 0;
+    int                         rows_ = 1;
+    int                         cols_ = 1;
+    int                         total_instances_ = 1;
+    int                         frames_per_instance_ = 1;
+    double                      spacing_x_ = 0.0;
+    double                      spacing_y_ = 0.0;
+    double                      spacing_z_ = 0.0;                   // calculate by slice location
+    double                      slice_thickness_ = 0.0;
+    double                      spacing_between_slice_ = 0.0;
+    int                         pixel_representation_ = 0;
+    int                         rescale_intercept_ = 0;
+    int                         rescale_slope_ = 1;
+    int                         bits_allocated_ = 0;
+    int                         bits_stored_ = 0;
+    int                         high_bit_ = 0;
 
-    int                 pixel_data_window_width_ = INT_MAX;
-    int                 pixel_data_window_center_ = INT_MAX;
+    int                         pixel_data_window_width_ = INT_MAX;
+    int                         pixel_data_window_center_ = INT_MAX;
+    
+    std::vector<int>            window_width_ = {};
+    std::vector<int>            window_center_ = {};
 
-    std::vector<int>    window_width_ = {};
-    std::vector<int>    window_center_ = {};
+    std::vector<uchar*>         instance_raw_data_list_ = {};       // for input
+    std::vector<uchar*>         instance_pixel_data_list_ = {};     // for output
 
-    std::vector<short*> instance_raw_data_list_ = {};       // for input
-    std::vector<uchar*> instance_pixel_data_list_ = {};     // for output
-
-    void                ConvertRawData2PixelData();
+    void                        ConvertRawData2PixelData();
 };
 
 #endif // DCMDATASET_H
