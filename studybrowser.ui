@@ -236,7 +236,7 @@
        <widget class="QTableView" name="table_series"/>
       </item>
       <item>
-       <widget class="QLabel" name="label_information">
+       <widget class="QLabel" name="label_instance">
         <property name="maximumSize">
          <size>
           <width>1000</width>
@@ -251,12 +251,12 @@
          </font>
         </property>
         <property name="text">
-         <string> Information</string>
+         <string>Instance</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QTableView" name="table_information"/>
+       <widget class="QTableView" name="table_instance"/>
       </item>
      </layout>
     </item>

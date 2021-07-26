@@ -21,14 +21,14 @@ StudyBrowser::StudyBrowser(QWidget* parent) :
 
     SetStudyTableHeader();
     SetSeriesTableHeader();
-    SetInformationTableHeader();
+    SetInstanceTableHeader();
 
     QObject::connect(ui_->browserButton_open_folder, SIGNAL(clicked()), this, SLOT(ToLoadFromFolder()));
     QObject::connect(ui_->browserButton_open_series, SIGNAL(clicked()), this, SLOT(ToOpenDicomSeries()));
     QObject::connect(ui_->browserButton_clear_all, SIGNAL(clicked()), this, SLOT(ToClearOpenedDicom()));
     QObject::connect(ui_->table_study, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectStudyTable(const QModelIndex&)));
     QObject::connect(ui_->table_series, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectSeriesTable(const QModelIndex&)));
-    QObject::connect(ui_->table_information, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectInformationTable(const QModelIndex&)));
+    QObject::connect(ui_->table_instance, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectInstanceTable(const QModelIndex&)));
 
 }
 
@@ -76,8 +76,19 @@ void StudyBrowser::ToOpenDicomSeries()
     const int patient_index = GlobalState::study_browser_.select_patient_index_;
     const int study_index = GlobalState::study_browser_.select_study_index_;
     const int series_index = GlobalState::study_browser_.select_series_index_;
-    auto& instance_list = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].instance_list_;
-
+    auto& select_series = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index];
+    std::vector<DcmInstance> instance_list;
+    if (select_series.has_multi_frames_instance_)
+    {
+        const int instance_index = GlobalState::study_browser_.select_instance_index_;
+        if (instance_index == -1) return;
+        instance_list.push_back(select_series.instance_list_[instance_index]);
+    }
+    else
+    {
+        instance_list = select_series.instance_list_;
+    }
+    
     DcmIO* dcmio = new DcmIO();
     DcmDatasetThread* thread = new DcmDatasetThread(instance_list, GlobalState::study_browser_.dcm_data_set_);
 
@@ -116,7 +127,7 @@ void StudyBrowser::RefreshAllTable()
 {
     RefreshStudyTableContents();
     RefreshSeriesTableContents();
-    RefreshInformationTableContents();
+    RefreshInstanceTableContents();
 }
 
 void StudyBrowser::RefreshStudyTableContents()
@@ -167,23 +178,32 @@ void StudyBrowser::RefreshSeriesTableContents()
     ui_->table_series->selectRow(0);
 }
 
-void StudyBrowser::RefreshInformationTableContents()
+void StudyBrowser::RefreshInstanceTableContents()
 {
-    QStandardItemModel* model = reinterpret_cast<QStandardItemModel*>(ui_->table_information->model());
+    QStandardItemModel* model = reinterpret_cast<QStandardItemModel*>(ui_->table_instance->model());
     if (model->rowCount() > 0) model->removeRows(0, model->rowCount());
     if (GlobalState::study_browser_.dcm_list_.empty()) return;
 
     int patient_index = GlobalState::study_browser_.select_patient_index_;
     int study_index = GlobalState::study_browser_.select_study_index_;
     int series_index = GlobalState::study_browser_.select_series_index_;
+    auto& select_series = GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index];
+    
     std::vector<std::vector<QString>> info_table;
-    info_table.push_back({"Patient ID", GlobalState::study_browser_.dcm_list_[patient_index].patient_id_});
-    info_table.push_back({"Study Instance UID",
-                          GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].study_instance_uid_});
-    info_table.push_back({"Series Instance UID",
-                         GlobalState::study_browser_.dcm_list_[patient_index].study_list_[study_index].series_list_[series_index].series_instance_uid_});
+    for (const auto& instance : select_series.instance_list_)
+    {
+        if (instance.number_of_frames_ <= 1) continue;
+        std::vector<QString> info;
+        info.push_back(instance.view_name_);
+        info.push_back(instance.sop_instance_uid_);
+        info_table.push_back(info);
+    }
+    if (info_table.empty()) return;
+    
     TableOperate::RefreshTableContents(model, info_table);
-    GlobalState::study_browser_.information_table_.select_index = 0;
+    GlobalState::study_browser_.instance_table_.select_index = 0;
+    GlobalState::study_browser_.select_instance_index_ = 0;
+    ui_->table_instance->selectRow(0);
 }
 
 void StudyBrowser::SelectStudyTable(const QModelIndex& index)
@@ -207,7 +227,7 @@ void StudyBrowser::SelectStudyTable(const QModelIndex& index)
         }
     }
     RefreshSeriesTableContents();
-    RefreshInformationTableContents();
+    RefreshInstanceTableContents();
 }
 
 void StudyBrowser::SelectSeriesTable(const QModelIndex& index)
@@ -215,19 +235,22 @@ void StudyBrowser::SelectSeriesTable(const QModelIndex& index)
     if (!index.isValid()) return;
     GlobalState::study_browser_.series_table_.select_index = index.row();
     GlobalState::study_browser_.select_series_index_ = index.row();
-    RefreshInformationTableContents();
+    RefreshInstanceTableContents();
 }
 
-void StudyBrowser::SelectInformationTable(const QModelIndex& index)
+void StudyBrowser::SelectInstanceTable(const QModelIndex& index)
 {
     if (!index.isValid()) return;
-    if (index.row() != GlobalState::study_browser_.information_table_.select_index)
+    if (index.row() != GlobalState::study_browser_.instance_table_.select_index)
     {
-        GlobalState::study_browser_.information_table_.select_index = index.row();
+        GlobalState::study_browser_.instance_table_.select_index = index.row();
+        GlobalState::study_browser_.select_instance_index_ = index.row();
     }
     else
     {
-        ui_->table_information->clearSelection();
+        ui_->table_instance->clearSelection();
+        GlobalState::study_browser_.instance_table_.select_index = -1;
+        GlobalState::study_browser_.select_instance_index_ = -1;
     }
 }
 
@@ -239,16 +262,18 @@ void StudyBrowser::ToClearOpenedDicom()
     GlobalState::study_browser_.dcm_data_set_.ClearAll();
     GlobalState::study_browser_.study_table_.select_index = 0;
     GlobalState::study_browser_.series_table_.select_index = 0;
-    GlobalState::study_browser_.information_table_.select_index = -1;
+    GlobalState::study_browser_.instance_table_.select_index = -1;
     GlobalState::study_browser_.select_patient_index_ = 0;
     GlobalState::study_browser_.select_series_index_ = 0;
     GlobalState::study_browser_.select_study_index_ = 0;
+    GlobalState::study_browser_.select_instance_index_ = -1;
     GlobalState::study_browser_.open_patient_index_ = 0;
     GlobalState::study_browser_.open_study_index_ = 0;
     GlobalState::study_browser_.open_series_index_ = 0;
+    GlobalState::study_browser_.open_instance_index_ = -1;
     RefreshStudyTableContents();
     RefreshSeriesTableContents();
-    RefreshInformationTableContents();
+    RefreshInstanceTableContents();
     ui_->progressbar->setValue(0);
 }
 
@@ -276,15 +301,15 @@ void StudyBrowser::SetSeriesTableHeader()
     ui_->table_series->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
 }
 
-void StudyBrowser::SetInformationTableHeader()
+void StudyBrowser::SetInstanceTableHeader()
 {
-    int size = static_cast<int>(GlobalState::study_browser_.information_table_.header.size());
+    int size = static_cast<int>(GlobalState::study_browser_.instance_table_.header.size());
     QStandardItemModel* model = new QStandardItemModel(0, size, this);
-    TableOperate::SetTableHeader(model, GlobalState::study_browser_.information_table_.header);
-    ui_->table_information->setModel(model);
-    ui_->table_information->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui_->table_information->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui_->table_information->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
-    ui_->table_information->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
+    TableOperate::SetTableHeader(model, GlobalState::study_browser_.instance_table_.header);
+    ui_->table_instance->setModel(model);
+    ui_->table_instance->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui_->table_instance->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui_->table_instance->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+    ui_->table_instance->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
 }
 

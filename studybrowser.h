@@ -20,11 +20,11 @@ public:
 private:
     void                        SetStudyTableHeader();
     void                        SetSeriesTableHeader();
-    void                        SetInformationTableHeader();
+    void                        SetInstanceTableHeader();
 
     void                        RefreshStudyTableContents();
     void                        RefreshSeriesTableContents();
-    void                        RefreshInformationTableContents();
+    void                        RefreshInstanceTableContents();
 
 private slots:
     void                        ToLoadFromFolder();
@@ -34,7 +34,7 @@ private slots:
     void                        RefreshAllTable();
     void                        SelectStudyTable(const QModelIndex& index);
     void                        SelectSeriesTable(const QModelIndex& index);
-    void                        SelectInformationTable(const QModelIndex& index);
+    void                        SelectInstanceTable(const QModelIndex& index);
 
     // while this slot receive signal, represent that "LoadFromFolder" or "Open Series" is finish.
     void                        ReceiveFromOtherThreadDcmIO(QString* path, DcmContent* list);

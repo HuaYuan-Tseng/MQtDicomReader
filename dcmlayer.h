@@ -7,9 +7,10 @@
 class DcmInstance {
 public:
     QString                     file_path_ = "";
+    QString                     view_name_ = "";
     QString                     sop_instance_uid_ = "";
+    int                         number_of_frames_ = 0;
     int                         instance_number_ = 0;
-    int                         number_of_frame_ = 0;
 };
 
 class DcmSeries {
@@ -17,7 +18,8 @@ public:
     QString                     series_instance_uid_ = "";
     QString                     series_description_ = "";
     int                         series_number_ = 0;
-
+    
+    bool                        has_multi_frames_instance_ = false;
     std::vector<DcmInstance>    instance_list_ = {};
     std::vector<DcmInstance>    sr_instance_list_ = {};
 };

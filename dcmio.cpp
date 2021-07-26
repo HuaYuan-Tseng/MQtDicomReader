@@ -63,14 +63,22 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
 
     DcmInstance instance;
     instance.file_path_ = path;
+    result = format->getDataset()->findAndGetOFStringArray(DCM_ViewName, str);
+    instance.view_name_ = (result.good()) ? str.c_str() : "";
+    if (!instance.view_name_.isEmpty() && instance.view_name_.contains('\\'))
+    {
+        QStringList str_list = instance.view_name_.split('\\');
+        instance.view_name_ = QString::fromLocal8Bit(QByteArray::fromHex(instance.view_name_.toLatin1()));
+    }
     result = format->getDataset()->findAndGetOFString(DCM_SOPInstanceUID, str);
     instance.sop_instance_uid_ = (result.good()) ? str.c_str() : "";
     result = format->getDataset()->findAndGetOFString(DCM_InstanceNumber, str);
     instance.instance_number_ = (result.good()) ? std::stoi(str.c_str()) : -1;
     result = format->getDataset()->findAndGetOFString(DCM_NumberOfFrames, str);
-    instance.number_of_frame_ = (result.good()) ? std::stoi(str.c_str()) : 1;
+    instance.number_of_frames_ = (result.good()) ? std::stoi(str.c_str()) : 1;
 
     DcmSeries series;
+    series.has_multi_frames_instance_ = (instance.number_of_frames_ > 1) ? true : false;
     result = format->getDataset()->findAndGetOFString(DCM_SeriesInstanceUID, str);
     series.series_instance_uid_ = (result.good()) ? str.c_str() : "";
     result = format->getDataset()->findAndGetOFString(DCM_SeriesDescription, str);
@@ -136,6 +144,7 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
     if (it_instance == it_series->instance_list_.end())
     {
         it_series->instance_list_.push_back(instance);
+        it_series->has_multi_frames_instance_ = (instance.number_of_frames_ > 1) ? true : false;
         std::sort(it_series->instance_list_.begin(), it_series->instance_list_.end(), [](DcmInstance& i1, DcmInstance& i2){
             return i1.instance_number_ < i2.instance_number_;
         });
@@ -164,7 +173,7 @@ bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data
         location_list.push_back(location);
         emit progress(100 * (++progress_val) / (file_count + 1));
     }
-    if (!location_list.empty() &&
+    if (location_list.size() > 1 &&
             std::abs(location_list[0] - location_list[1]) == std::abs(location_list[1] - location_list[2]))
     {
         data_set->set_spacing_z(std::abs(location_list[0] - location_list[1]));
