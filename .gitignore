@@ -1,0 +1,12 @@
+release/
+debug/
+.vs/
+.qmake.stash
+QtDicomReader.sln
+QtDicomReader.vcxproj
+QtDicomReader.vcxproj.filters
+ui_imageviewer1.h
+ui_mainwindow.h
+ui_studybrowser.h
+thirdparty/
+.vshistory/

@@ -41,9 +41,16 @@ void StudyBrowser::ToLoadFromFolder()
 {
     if (is_opening) return;
 
+#ifdef Q_OS_MAC
+    QString init_path = "/Users/huayuan/Documents/Dev/Dicom";
+#endif
+#ifdef Q_OS_WIN
+    QString init_path = "D:/TestCases/";
+#endif
+
     GlobalState::study_browser_.open_dir_ =
             QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
-                                              "/Users/huayuan/Documents/Dev/Dicom",
+                                              init_path,
                                               QFileDialog::ShowDirsOnly |
                                               QFileDialog::DontResolveSymlinks);
 

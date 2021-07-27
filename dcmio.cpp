@@ -47,7 +47,7 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
     OFCondition result = format->loadFile(OFFilename(path.toLocal8Bit()));
     if (result.bad())
     {
-        qDebug() << "Failed to load " << path << " : ";
+        qDebug() << "Failed to load : " << path;
         //qDebug() << result.text();
         delete format;
         return;
@@ -56,7 +56,7 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
     OFString str;
     if (format->getDataset()->isEmpty())
     {
-        qDebug() << "Failed to get dataset " << path << " : ";
+        qDebug() << "Failed to get dataset : " << path;
         delete format;
         return;
     }
