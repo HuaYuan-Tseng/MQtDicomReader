@@ -3,6 +3,7 @@
 #include <QDir>
 
 #include <cstdio>
+
 #include <dcmtk/ofstd/ofcond.h>
 #include <dcmtk/dcmdata/dctk.h>
 #include <dcmtk/dcmjpeg/djdecode.h>

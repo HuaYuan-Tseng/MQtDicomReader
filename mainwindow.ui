@@ -63,7 +63,7 @@
          </property>
          <property name="font">
           <font>
-           <pointsize>11</pointsize>
+           <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
@@ -77,8 +77,8 @@
         <widget class="QToolButton" name="menuButton_image_viewer_1">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>60</horstretch>
-           <verstretch>60</verstretch>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
@@ -87,9 +87,15 @@
            <height>60</height>
           </size>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>60</width>
+           <height>60</height>
+          </size>
+         </property>
          <property name="font">
           <font>
-           <pointsize>11</pointsize>
+           <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
@@ -103,6 +109,9 @@
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -128,7 +137,7 @@
          </property>
          <property name="font">
           <font>
-           <pointsize>13</pointsize>
+           <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
           </font>
