@@ -24,7 +24,11 @@
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QVTKOpenGLWidget" name="vtk_viewer_0"/>
+     <widget class="QVTKOpenGLWidget" name="vtk_viewer_0">
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
