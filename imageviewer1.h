@@ -15,7 +15,7 @@ class ImageViewer1 : public QWidget
     Q_OBJECT
 
 public:
-    explicit                        ImageViewer1(QWidget *parent = nullptr);
+    explicit                        ImageViewer1(GlobalState* state, QWidget *parent = nullptr);
                                     ~ImageViewer1();
 
 public slots:
@@ -26,6 +26,7 @@ private:
 
 private:
     Ui::ImageViewer1*               ui_;
+    GlobalState*                    global_state_;
 
     std::map<ViewName, Viewer*>     viewer_map_;
 };

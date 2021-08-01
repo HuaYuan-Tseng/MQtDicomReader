@@ -6,7 +6,9 @@ DcmDataSet::DcmDataSet()
 
 DcmDataSet::DcmDataSet(DcmDataSet* data_set)
 {
-
+    this->patient_name_ = data_set->patient_name();
+    this->patient_id_ = data_set->patient_id();
+    this->study_instance_uid() = data_set->study_instance_uid();
 }
 
 DcmDataSet::~DcmDataSet()

@@ -14,7 +14,7 @@ class StudyBrowser : public QWidget
     Q_OBJECT
 
 public:
-    StudyBrowser(QWidget* parent = nullptr);
+    StudyBrowser(GlobalState* state, QWidget* parent = nullptr);
     ~StudyBrowser();
 
 private:
@@ -48,6 +48,7 @@ public:
     Ui::StudyBrowser*           ui_;
 
 private:
+    GlobalState*                global_state_ = nullptr;
     bool                        is_opening = false;
 
 };

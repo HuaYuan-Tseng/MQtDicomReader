@@ -27,6 +27,7 @@ private slots :
 
 private:
     Ui::MainWindow*                     ui_;
+    GlobalState*                        global_state_ = nullptr;
     StudyBrowser*                       study_browser_ = nullptr;
     ImageViewer1*                       image_viewer_1_ = nullptr;
 

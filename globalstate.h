@@ -19,8 +19,8 @@ struct Table
     int                     select_index = -1;
 };
 
-namespace GlobalState
-{
+class GlobalState {
+public:
     class StudyBrowser {
     public:
         QString             open_dir_ = "";
@@ -41,12 +41,12 @@ namespace GlobalState
         int                 open_series_index_ = 0;
         int                 open_instance_index_ = -1;
     };
-    static StudyBrowser     study_browser_;
+    StudyBrowser            study_browser_;
 
     class ImageViewer1 {
     public:
     };
-    static ImageViewer1     image_viewer_1_;
+    ImageViewer1            image_viewer_1_;
 };
 
 #endif // GLOBALSTATE_H

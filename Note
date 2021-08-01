@@ -29,4 +29,10 @@ for (int i = 0; i < list.size(); ++i)
     }
 }
 
+qDebug() << "------------";
+qDebug() << "Open dir : " << GlobalState::study_browser_.open_dir_;
+qDebug() << "Dcm list size : " << GlobalState::study_browser_.dcm_list_.size();
+qDebug() << "Dcm Dataset name : " << GlobalState::study_browser_.dcm_data_set_.patient_name();
+
+
 }

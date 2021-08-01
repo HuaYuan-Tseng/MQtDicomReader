@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDebug>
 #include <QMessageBox>
 
 
@@ -12,10 +13,12 @@ MainWindow::MainWindow(QWidget *parent)
     this->setWindowTitle("QtDicomReader");
     this->setFixedSize(this->width(), this->height());
 
+    global_state_ = new GlobalState();
+    
     // Menubar
-    study_browser_ = new StudyBrowser();
+    study_browser_ = new StudyBrowser(global_state_);
     ui_->mainwindow_stacked_widget->insertWidget(MainStackedWidget::STUDY_BROWSER, study_browser_);
-    image_viewer_1_ = new ImageViewer1();
+    image_viewer_1_ = new ImageViewer1(global_state_);
     ui_->mainwindow_stacked_widget->insertWidget(MainStackedWidget::IMAGE_VIEWER_1, image_viewer_1_);
 
     QObject::connect(ui_->menuButton_exit, SIGNAL(clicked()), this, SLOT(ToExitApp()));

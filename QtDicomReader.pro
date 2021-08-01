@@ -21,7 +21,8 @@ SOURCES += \
     mainwindow.cpp \
     studybrowser.cpp \
     tableoperate.cpp \
-    viewer.cpp
+    viewer.cpp \
+    viewerinteractor.cpp
 
 HEADERS += \
     dcmdataset.h \
@@ -34,7 +35,8 @@ HEADERS += \
     mainwindow.h \
     studybrowser.h \
     tableoperate.h \
-    viewer.h
+    viewer.h \
+    viewerinteractor.h
 
 FORMS += \
     imageviewer1.ui \
