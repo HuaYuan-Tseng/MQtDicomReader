@@ -90,7 +90,7 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
         for (int j = 0; j < dimension_[1]; ++j)
         {
             res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
-            for (int k = 0; k < dimension_[2]; ++k)
+            for (int k = 0; k < dimension_[0]; ++k)
             {
                 *res_data = (*raw_data) * rescale_slope_ + rescale_intercept_;
                 ++res_data;

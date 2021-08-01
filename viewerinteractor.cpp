@@ -6,3 +6,8 @@ ViewerInteractor::ViewerInteractor()
 {
     
 }
+
+ViewerInteractor::~ViewerInteractor()
+{
+    
+}
