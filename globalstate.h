@@ -19,6 +19,10 @@ struct Table
     int                     select_index = -1;
 };
 
+enum class ViewName {
+    TRA, COR, SAG
+};
+
 class GlobalState {
 public:
     class StudyBrowser {
@@ -45,6 +49,15 @@ public:
 
     class ImageViewer1 {
     public:
+        ViewName            curr_operate_view_ = ViewName::TRA;
+        double              curr_world_pos_[3] = { 0, 0, 0 };
+        int                 curr_pixel_pos_[3] = { 0, 0, 0 };
+
+        bool                is_draging_left_ = false;
+        bool                is_draging_right_ = false;
+        bool                is_pressed_shift_ = false;
+        bool                is_pressed_ctrl_ = false;
+        bool                is_pressed_alt_ = false;
     };
     ImageViewer1            image_viewer_1_;
 };

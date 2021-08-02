@@ -1,8 +1,9 @@
 #include "viewer.h"
 
-Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget) :
+Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget, GlobalState* state) :
     view_name_(view_name),
-    widget_(widget)
+    widget_(widget),
+    global_state_(state)
 {
     
 }
@@ -10,6 +11,12 @@ Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget) :
 Viewer::~Viewer()
 {
     widget_ = nullptr;
+    global_state_ = nullptr;
+
+    if (image_data_ != nullptr)         image_data_->ReleaseData();
+    if (image_render_ != nullptr)       image_render_->ReleaseGraphicsResources(render_window_);
+    if (image_viewer_ != nullptr)       image_viewer_->RemoveAllObservers();
+    if (image_interactor_ != nullptr)   image_interactor_->RemoveAllObservers();
 }
 
 void Viewer::Init(const DcmDataSet& data_set)
@@ -57,6 +64,9 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_interactor_ = vtkSmartPointer<ViewerInteractor>::New();
     image_interactor_->SetCurrentRenderer(image_render_);
     image_interactor_->SetAutoAdjustCameraClippingRange(false);
+    image_interactor_->set_image_viewer(image_viewer_);
+    image_interactor_->set_global_state(global_state_);
+    image_interactor_->set_view_name(view_name_);
     image_interactor_->Modified();
     
     widget_->SetRenderWindow(render_window_);
@@ -65,10 +75,24 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     
     image_viewer_->SetColorLevel(window_center_);
     image_viewer_->SetColorWindow(window_width_);
-    image_viewer_->SetSliceOrientationToXY();
+    switch (view_name_) {
+    case ViewName::TRA :
+        image_viewer_->SetSliceOrientationToXY();
+        image_viewer_->SetSlice(0);
+        break;
+    case ViewName::SAG :
+        image_viewer_->SetSliceOrientationToYZ();
+        image_viewer_->SetSlice(0);
+        break;
+    case ViewName::COR :
+        image_viewer_->SetSliceOrientationToXZ();
+        image_viewer_->SetSlice(0);
+        break;
+    }
+
     image_viewer_->Modified();
-    
-    image_viewer_->Render();
+    this->set_clipping_range();
+    this->RefreshViewer();
 }
 
 vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_set)
@@ -87,7 +111,7 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
         raw_data = (data_set.frames_per_instance() == 1) ? 
                     reinterpret_cast<unsigned short*>(data_set.get_instance_raw_data(i)) :
                     reinterpret_cast<unsigned short*>(data_set.get_frame_raw_data(0, i));
-        for (int j = 0; j < dimension_[1]; ++j)
+        for (int j = dimension_[1] - 1; j >= 0; --j)
         {
             res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
             for (int k = 0; k < dimension_[0]; ++k)
@@ -102,14 +126,44 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
     return res;
 }
 
+void Viewer::set_clipping_range()
+{
+    if (image_viewer_ == nullptr) return;
+    double* bounds = image_viewer_->GetImageActor()->GetBounds();
+    double spos = bounds[image_viewer_->GetSliceOrientation() * 2];
+    double cpos = image_viewer_->GetRenderer()->GetActiveCamera()->GetPosition()[image_viewer_->GetSliceOrientation()];
+    double range = fabs(spos - cpos);
+    double depth_space = 0.0;
+    switch (view_name_) {
+    case ViewName::TRA :
+        depth_space = spacing_[2];
+        break;
+    case ViewName::SAG :
+        depth_space = spacing_[0];
+        break;
+    case ViewName::COR :
+        depth_space = spacing_[1];
+        break;
+    }
+    if (clipping_range_ != nullptr) delete[] clipping_range_;
+    clipping_range_ = new double[2];
+    clipping_range_[0] = range - depth_space / 2;
+    clipping_range_[1] = range + depth_space / 2;
+}
 
+double Viewer::get_zoom_rate() const
+{
+    vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
+    coordinate->SetValue(0, 0, 0);
+    int* res = coordinate->GetComputedDisplayValue(image_render_);
+    int val = res[0];
+    coordinate->SetValue(dimension_[0], 0, 0);
+    res = coordinate->GetComputedDisplayValue(image_render_);
+    return static_cast<double>((res[0] - val) / dimension_[0]);
+}
 
-
-
-
-
-
-
-
-
-
+void Viewer::RefreshViewer()
+{
+    image_viewer_->GetRenderer()->GetActiveCamera()->SetClippingRange(clipping_range_[0], clipping_range_[1]);
+    image_viewer_->Render();
+}
