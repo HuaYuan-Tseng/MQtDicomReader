@@ -61,7 +61,8 @@ public:
         std::map<ViewName, OperateViewer> control_map_ = { {ViewName::TRA, OperateViewer{ViewName::TRA}},
                                                             {ViewName::SAG, OperateViewer{ViewName::SAG}},
                                                             {ViewName::COR, OperateViewer{ViewName::COR}} };
-
+        
+        ViewName            current_control_view_ = ViewName::TRA;
         bool                is_draging_left_ = false;
         bool                is_draging_right_ = false;
         bool                is_pressed_shift_ = false;

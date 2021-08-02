@@ -23,6 +23,8 @@ public slots:
 
 private:
     void                            InitViewer(ViewName view_name, QVTKOpenGLWidget* widget);
+    void                            MoveSlicePlus();
+    void                            MoveSliceMinus();
 
 private:
     Ui::ImageViewer1*               ui_;

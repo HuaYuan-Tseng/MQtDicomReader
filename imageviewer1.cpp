@@ -26,5 +26,24 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);
     viewer->Init(global_state_->study_browser_.dcm_data_set_);
+    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_PLUS, [&]{ MoveSlicePlus(); });
+    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_MINUS, [&]{ MoveSliceMinus(); });
     viewer_map_[view_name] = viewer;
 }
+
+void ImageViewer1::MoveSlicePlus()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->MoveSlicePlus();
+}
+
+void ImageViewer1::MoveSliceMinus()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->MoveSliceMinus();
+}
+
+
+
+
+
+
+

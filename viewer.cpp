@@ -2,8 +2,8 @@
 
 Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget, GlobalState* state) :
     view_name_(view_name),
-    widget_(widget),
-    global_state_(state)
+    global_state_(state),
+    widget_(widget)
 {
     
 }
@@ -164,6 +164,21 @@ double Viewer::get_zoom_rate() const
 
 void Viewer::RefreshViewer()
 {
+    this->set_clipping_range();
     image_viewer_->GetRenderer()->GetActiveCamera()->SetClippingRange(clipping_range_[0], clipping_range_[1]);
     image_viewer_->Render();
+}
+
+void Viewer::MoveSlicePlus()
+{
+    int new_slice = image_viewer_->GetSlice() + 1;
+    image_viewer_->SetSlice(new_slice);
+    this->RefreshViewer();
+}
+
+void Viewer::MoveSliceMinus()
+{
+    int new_slice = image_viewer_->GetSlice() - 1;
+    image_viewer_->SetSlice(new_slice);
+    this->RefreshViewer();
 }
