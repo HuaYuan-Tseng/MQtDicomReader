@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <vector>
+#include <map>
 
 #include "dcmlayer.h"
 #include "dcmdataset.h"
@@ -21,6 +22,14 @@ struct Table
 
 enum class ViewName {
     TRA, COR, SAG
+};
+
+struct OperateViewer {
+    ViewName                operate_view = ViewName::TRA;
+    bool                    is_control_current_view = false;
+    double                  curr_mouse_world_pos_[3] = { 0, 0, 0 };
+    int                     curr_mouse_pixel_pos_[3] = { 0, 0, 0 };
+    int                     control_current_slice = 0;
 };
 
 class GlobalState {
@@ -49,9 +58,9 @@ public:
 
     class ImageViewer1 {
     public:
-        ViewName            curr_operate_view_ = ViewName::TRA;
-        double              curr_world_pos_[3] = { 0, 0, 0 };
-        int                 curr_pixel_pos_[3] = { 0, 0, 0 };
+        std::map<ViewName, OperateViewer> control_map_ = { {ViewName::TRA, OperateViewer{ViewName::TRA}},
+                                                            {ViewName::SAG, OperateViewer{ViewName::SAG}},
+                                                            {ViewName::COR, OperateViewer{ViewName::COR}} };
 
         bool                is_draging_left_ = false;
         bool                is_draging_right_ = false;
