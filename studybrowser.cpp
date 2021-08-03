@@ -46,7 +46,7 @@ void StudyBrowser::ToLoadFromFolder()
     QString init_path = "/Users/huayuan/Documents/Dev/Dicom";
 #endif
 #ifdef Q_OS_WIN
-    QString init_path = "D:/TestCases/";
+    QString init_path = "D:/TestCases/LungCT";
 #endif
     
     global_state_->study_browser_.open_dir_ =

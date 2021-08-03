@@ -17,7 +17,7 @@ ImageViewer1::~ImageViewer1()
 
 void ImageViewer1::SetupViewers()
 {
-    InitViewer(ViewName::COR, ui_->vtk_viewer_0);
+    InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
 }
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)

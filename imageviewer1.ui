@@ -18,8 +18,8 @@
     <rect>
      <x>399</x>
      <y>10</y>
-     <width>981</width>
-     <height>831</height>
+     <width>1011</width>
+     <height>861</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
