@@ -120,6 +120,8 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(QString* path, DcmContent* list)
     global_state_->study_browser_.open_dir_ = *path;
     global_state_->study_browser_.dcm_list_ = *list;
     is_opening = false;
+
+    this->ToOpenDicomSeries();
 }
 void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set)
 {

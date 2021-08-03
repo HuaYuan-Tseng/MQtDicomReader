@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include <opencv2/opencv.hpp>
+
 #include "globalstate.h"
 #include "viewer.h"
 
@@ -20,6 +22,7 @@ public:
 
 public slots:
     void                            SetupViewers();
+    void                            ToProcess();
 
 private:
     void                            InitViewer(ViewName view_name, QVTKOpenGLWidget* widget);
@@ -28,6 +31,8 @@ private:
     void                            DragSlice();
     void                            ZoomIn();
     void                            ZoomOut();
+
+    void                            SaveOpenCVImage(const std::string name, const cv::Mat& src) const;
 
 private:
     Ui::ImageViewer1*               ui_;

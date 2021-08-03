@@ -1,6 +1,7 @@
 #include "imageviewer1.h"
 #include "ui_imageviewer1.h"
 
+#include <QTime>
 
 ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     QWidget(parent),
@@ -8,6 +9,8 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     global_state_(state)
 {
     ui_->setupUi(this);
+
+    QObject::connect(ui_->imageButton_Process, SIGNAL(clicked()), this, SLOT(ToProcess()));
 }
 
 ImageViewer1::~ImageViewer1()
@@ -59,9 +62,28 @@ void ImageViewer1::ZoomOut()
     viewer_map_[global_state_->image_viewer_1_.current_control_view_]->Zoom(0.85);
 }
 
+void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) const
+{
+    // 輸出看結果用
+    cv::imwrite("C:/Users/Rex/Desktop/" +
+        QTime::currentTime().toString("hh-mm-ss").toStdString() + "-" + name + ".jpg", src);
+}
 
+void ImageViewer1::ToProcess()
+{
+    if (viewer_map_.empty()) return;
+    auto& data_set = global_state_->study_browser_.dcm_data_set_;
 
+    //cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(0));
+    //cv::imshow("src", src);
 
+    /*int total = data_set.total_instances();
+    for (int i = 0; i < 10; ++i)
+    {
+        cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(i));
+        SaveOpenCVImage(std::to_string(i), src);
+    }*/
+}
 
 
 

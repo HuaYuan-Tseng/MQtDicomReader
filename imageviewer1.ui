@@ -32,6 +32,26 @@
     </item>
    </layout>
   </widget>
+  <widget class="QPushButton" name="imageButton_Process">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>10</y>
+     <width>131</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Process</string>
+   </property>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>
