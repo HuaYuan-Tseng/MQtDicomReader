@@ -27,8 +27,13 @@ enum class ViewName {
 struct OperateViewer {
     ViewName                operate_view = ViewName::TRA;
     bool                    is_control_current_view = false;
+    double                  start_mouse_world_pos_[3] = { 0, 0, 0 };
     double                  curr_mouse_world_pos_[3] = { 0, 0, 0 };
+    double                  end_mouse_world_pos_[3] = { 0, 0, 0 };
+
+    int                     start_mouse_pixel_pos_[3] = { 0, 0, 0 };
     int                     curr_mouse_pixel_pos_[3] = { 0, 0, 0 };
+    int                     end_mouse_pixel_pos_[3] = { 0, 0, 0 };
     int                     control_current_slice = 0;
 };
 

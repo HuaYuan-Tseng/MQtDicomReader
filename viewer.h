@@ -11,6 +11,7 @@ VTK_MODULE_INIT(vtkRenderingFreeType)
 #include <vtkImageViewer2.h>
 #include <vtkRenderer.h>
 #include <vtkCamera.h>
+#include <vtkImageFlip.h>
 #include <vtkImageActor.h>
 #include <vtkCoordinate.h>
 #include "viewerinteractor.h"
@@ -30,6 +31,8 @@ public:
     
     void                                MoveSlicePlus();
     void                                MoveSliceMinus();
+    void                                DragSlice();
+    void                                Zoom(const double rate);
     
     //-------------------------------------------------------------------------------------------//
 
@@ -61,6 +64,7 @@ public:
     const double*                       clipping_range() const { return clipping_range_; }
 
 private:
+    void                                FillView();
     void                                RefreshViewer();
     void                                InitVTKWidget(const DcmDataSet& data_set);
     vtkSmartPointer<vtkImageData>       InitVTKImageData(const DcmDataSet& data_set);

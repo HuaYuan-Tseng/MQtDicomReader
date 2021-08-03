@@ -17,7 +17,7 @@ ImageViewer1::~ImageViewer1()
 
 void ImageViewer1::SetupViewers()
 {
-    InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
+    InitViewer(ViewName::COR, ui_->vtk_viewer_0);
 }
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
@@ -28,6 +28,9 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     viewer->Init(global_state_->study_browser_.dcm_data_set_);
     viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_PLUS, [&]{ MoveSlicePlus(); });
     viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_MINUS, [&]{ MoveSliceMinus(); });
+    viewer->image_interactor()->AddEvent(Event::DRAG_SLICE, [&] { DragSlice(); });
+    viewer->image_interactor()->AddEvent(Event::ZOOM_IN, [&]{ ZoomIn(); });
+    viewer->image_interactor()->AddEvent(Event::ZOOM_OUT, [&]{ ZoomOut(); });
     viewer_map_[view_name] = viewer;
 }
 
@@ -39,6 +42,21 @@ void ImageViewer1::MoveSlicePlus()
 void ImageViewer1::MoveSliceMinus()
 {
     viewer_map_[global_state_->image_viewer_1_.current_control_view_]->MoveSliceMinus();
+}
+
+void ImageViewer1::DragSlice()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->DragSlice();
+}
+
+void ImageViewer1::ZoomIn()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->Zoom(1.15);
+}
+
+void ImageViewer1::ZoomOut()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->Zoom(0.85);
 }
 
 

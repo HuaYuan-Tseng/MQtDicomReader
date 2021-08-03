@@ -71,27 +71,30 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     
     widget_->SetRenderWindow(render_window_);
     widget_->GetInteractor()->SetInteractorStyle(image_interactor_);
+    widget_->GetInteractor()->SetRenderWindow(render_window_);
     widget_->update();
     
+    image_viewer_->Render();
     image_viewer_->SetColorLevel(window_center_);
     image_viewer_->SetColorWindow(window_width_);
-    switch (view_name_) {
-    case ViewName::TRA :
+    if (view_name_ == ViewName::TRA)
+    {
         image_viewer_->SetSliceOrientationToXY();
         image_viewer_->SetSlice(0);
-        break;
-    case ViewName::SAG :
-        image_viewer_->SetSliceOrientationToYZ();
-        image_viewer_->SetSlice(0);
-        break;
-    case ViewName::COR :
+        this->FillView();
+    }
+    else if (view_name_ == ViewName::COR)
+    {
         image_viewer_->SetSliceOrientationToXZ();
         image_viewer_->SetSlice(0);
-        break;
+        this->FillView();
     }
-
-    image_viewer_->Modified();
-    this->set_clipping_range();
+    else if (view_name_ == ViewName::SAG)
+    {
+        image_viewer_->SetSliceOrientationToYZ();
+        image_viewer_->SetSlice(0);
+        this->FillView();
+    }
     this->RefreshViewer();
 }
 
@@ -116,13 +119,37 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
             res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
             for (int k = 0; k < dimension_[0]; ++k)
             {
-                *res_data = (*raw_data) * rescale_slope_ + rescale_intercept_;
-                ++res_data;
-                ++raw_data;
+                *res_data++ = (*raw_data++) * rescale_slope_ + rescale_intercept_;
             }
         }
     }
-    
+
+
+    /*if (view_name_ == ViewName::TRA)
+    {
+        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+        flip->SetInputData(res);
+        flip->SetFilteredAxis(1);
+        flip->Update();
+        res = flip->GetOutput();
+    }
+    else if (view_name_ == ViewName::SAG)
+    {
+        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+        flip->SetInputData(res);
+        flip->SetFilteredAxis(2);
+        flip->Update();
+        res = flip->GetOutput();
+    }
+    else if (view_name_ == ViewName::COR)
+    {
+        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+        flip->SetInputData(res);
+        flip->SetFilteredAxis(2);
+        flip->Update();
+        res = flip->GetOutput();
+    }
+    */
     return res;
 }
 
@@ -134,32 +161,13 @@ void Viewer::set_clipping_range()
     double cpos = image_viewer_->GetRenderer()->GetActiveCamera()->GetPosition()[image_viewer_->GetSliceOrientation()];
     double range = fabs(spos - cpos);
     double depth_space = 0.0;
-    switch (view_name_) {
-    case ViewName::TRA :
-        depth_space = spacing_[2];
-        break;
-    case ViewName::SAG :
-        depth_space = spacing_[0];
-        break;
-    case ViewName::COR :
-        depth_space = spacing_[1];
-        break;
-    }
+    if (view_name_ == ViewName::TRA)        depth_space = spacing_[2];
+    else if (view_name_ == ViewName::COR)   depth_space = spacing_[1];
+    else if (view_name_ == ViewName::SAG)   depth_space = spacing_[0];
     if (clipping_range_ != nullptr) delete[] clipping_range_;
     clipping_range_ = new double[2];
     clipping_range_[0] = range - depth_space / 2;
     clipping_range_[1] = range + depth_space / 2;
-}
-
-double Viewer::get_zoom_rate() const
-{
-    vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
-    coordinate->SetValue(0, 0, 0);
-    int* res = coordinate->GetComputedDisplayValue(image_render_);
-    int val = res[0];
-    coordinate->SetValue(dimension_[0], 0, 0);
-    res = coordinate->GetComputedDisplayValue(image_render_);
-    return static_cast<double>((res[0] - val) / dimension_[0]);
 }
 
 void Viewer::RefreshViewer()
@@ -180,5 +188,87 @@ void Viewer::MoveSliceMinus()
 {
     int new_slice = image_viewer_->GetSlice() - 1;
     image_viewer_->SetSlice(new_slice);
+    this->RefreshViewer();
+}
+
+void Viewer::DragSlice()
+{
+    if (view_name_ == ViewName::TRA)
+    {
+        image_viewer_->SetSlice(image_viewer_->GetSlice() -
+            (global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[1] -
+                global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[1]));
+
+        global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[1] =
+           global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[1];
+    }
+    else if (view_name_ == ViewName::COR)
+    {
+        image_viewer_->SetSlice(image_viewer_->GetSlice() -
+            (global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[2] -
+                global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[2]));
+
+        global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[2] =
+            global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[2];
+    }
+    else if (view_name_ == ViewName::SAG)
+    {
+        image_viewer_->SetSlice(image_viewer_->GetSlice() -
+            (global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0] -
+                global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0]));
+
+        global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] =
+            global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0];
+    }
+}
+
+double Viewer::get_zoom_rate() const
+{
+    vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
+    coordinate->SetValue(0, 0, 0);
+    int* res = coordinate->GetComputedDisplayValue(image_render_);
+    int val = res[0];
+    coordinate->SetValue(dimension_[0], 0, 0);
+    res = coordinate->GetComputedDisplayValue(image_render_);
+    return static_cast<double>((res[0] - val) / dimension_[0]);
+}
+
+void Viewer::FillView()
+{
+    double* bounds = image_viewer_->GetRenderer()->ComputeVisiblePropBounds();
+    double dim[3] = { (bounds[1] - bounds[0]) / 2, 
+                        (bounds[3] - bounds[2]) / 2,
+                        (bounds[5] - bounds[4]) / 2};
+    int* win_size = image_viewer_->GetSize();
+    double r = static_cast<double>(win_size[0]) / win_size[1];
+
+    double x, y;
+    if (view_name_ == ViewName::TRA)
+    {
+        x = dim[1];
+        y = dim[2];
+    }
+    else if (view_name_ == ViewName::COR)
+    {
+        x = dim[0];
+        y = dim[2];
+    }
+    else if (view_name_ == ViewName::SAG)
+    {
+        x = dim[0];
+        y = dim[1];
+    }
+
+    if (r >= x / y)
+        image_viewer_->GetRenderer()->GetActiveCamera()->SetParallelScale(y + 1);
+    else
+        image_viewer_->GetRenderer()->GetActiveCamera()->SetParallelScale(x / r + 1);
+
+    this->RefreshViewer();
+}
+
+void Viewer::Zoom(const double rate)
+{
+    image_viewer_->GetRenderer()->GetActiveCamera()->Zoom(rate);
     this->RefreshViewer();
 }

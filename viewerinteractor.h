@@ -6,6 +6,11 @@
 #include <vtkSmartPointer.h>
 #include <vtkObjectFactory.h>
 #include <vtkImageViewer2.h>
+#include <vtkImageData.h>
+#include <vtkCoordinate.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRendererCollection.h>
 
 #include <functional>
 
@@ -14,6 +19,9 @@
 enum class Event {
     MOVE_SLICE_PLUS,
     MOVE_SLICE_MINUS,
+	DRAG_SLICE,
+	ZOOM_IN,
+	ZOOM_OUT
 };
 
 class ViewerInteractor : public vtkInteractorStyleImage {
@@ -28,7 +36,7 @@ public:
 	void			set_global_state(GlobalState* state) { global_state_ = state; }
 	void			set_image_viewer(vtkSmartPointer<vtkImageViewer2> viewer) { image_viewer_ = viewer; }
     
-    void            AddEvent(Event event_name, std::function<void()> func) { event_map_[event_name] = func; }
+    void			AddEvent(Event event_name, std::function<void()> func) { event_map_[event_name] = func; }
     
 protected:
 	virtual void	OnMouseMove() override;
@@ -43,11 +51,15 @@ protected:
     
 private:
     void            ConfirmCurrentControlView();
+	//void			GetMouseLocation(double world_pos[3], int image_pos[3]);
+	double*			GetMouseWorldLocation();
 
 private:
 	ViewName                                view_name_ = ViewName::TRA;
 	GlobalState*                            global_state_ = nullptr;
 	vtkSmartPointer<vtkImageViewer2>        image_viewer_ = nullptr;
+	vtkSmartPointer<vtkCoordinate>			coordinate_ = nullptr;
+
     std::map<Event, std::function<void()>>  event_map_;
 };
 

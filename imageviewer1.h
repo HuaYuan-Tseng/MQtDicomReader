@@ -25,6 +25,9 @@ private:
     void                            InitViewer(ViewName view_name, QVTKOpenGLWidget* widget);
     void                            MoveSlicePlus();
     void                            MoveSliceMinus();
+    void                            DragSlice();
+    void                            ZoomIn();
+    void                            ZoomOut();
 
 private:
     Ui::ImageViewer1*               ui_;
