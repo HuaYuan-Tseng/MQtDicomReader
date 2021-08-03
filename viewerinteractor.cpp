@@ -167,7 +167,7 @@ void ViewerInteractor::OnKeyDown()
 {
     vtkRenderWindowInteractor* rwi = this->Interactor;
     std::string key = rwi->GetKeySym();
-
+    
     if (key == "Shift_L")
     {
         global_state_->image_viewer_1_.is_pressed_shift_ = true;

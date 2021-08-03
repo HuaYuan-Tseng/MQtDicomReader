@@ -114,7 +114,7 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
         raw_data = (data_set.frames_per_instance() == 1) ? 
                     reinterpret_cast<unsigned short*>(data_set.get_instance_raw_data(i)) :
                     reinterpret_cast<unsigned short*>(data_set.get_frame_raw_data(0, i));
-        for (int j = dimension_[1] - 1; j >= 0; --j)
+        for (int j = 0; j < dimension_[1]; ++j)
         {
             res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
             for (int k = 0; k < dimension_[0]; ++k)
@@ -123,33 +123,15 @@ vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_se
             }
         }
     }
+    
+    vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
+    flip->SetInputData(res);
+    if (view_name_ == ViewName::TRA) flip->SetFilteredAxes(1);
+    else if (view_name_ == ViewName::COR) flip->SetFilteredAxes(2);
+    else if (view_name_ == ViewName::SAG) flip->SetFilteredAxes(2);
+    flip->Update();
+    res = flip->GetOutput();
 
-
-    /*if (view_name_ == ViewName::TRA)
-    {
-        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
-        flip->SetInputData(res);
-        flip->SetFilteredAxis(1);
-        flip->Update();
-        res = flip->GetOutput();
-    }
-    else if (view_name_ == ViewName::SAG)
-    {
-        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
-        flip->SetInputData(res);
-        flip->SetFilteredAxis(2);
-        flip->Update();
-        res = flip->GetOutput();
-    }
-    else if (view_name_ == ViewName::COR)
-    {
-        vtkSmartPointer<vtkImageFlip> flip = vtkSmartPointer<vtkImageFlip>::New();
-        flip->SetInputData(res);
-        flip->SetFilteredAxis(2);
-        flip->Update();
-        res = flip->GetOutput();
-    }
-    */
     return res;
 }
 
@@ -242,11 +224,11 @@ void Viewer::FillView()
     int* win_size = image_viewer_->GetSize();
     double r = static_cast<double>(win_size[0]) / win_size[1];
 
-    double x, y;
+    double x = 0.0, y = 0.0;
     if (view_name_ == ViewName::TRA)
     {
-        x = dim[1];
-        y = dim[2];
+        x = dim[0];
+        y = dim[1];
     }
     else if (view_name_ == ViewName::COR)
     {
@@ -255,8 +237,8 @@ void Viewer::FillView()
     }
     else if (view_name_ == ViewName::SAG)
     {
-        x = dim[0];
-        y = dim[1];
+        x = dim[1];
+        y = dim[2];
     }
 
     if (r >= x / y)

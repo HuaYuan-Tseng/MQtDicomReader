@@ -64,7 +64,7 @@ void ImageViewer1::ZoomOut()
 
 void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) const
 {
-    // 輸出看結果用
+    // Output to view the result
     cv::imwrite("C:/Users/Rex/Desktop/" +
         QTime::currentTime().toString("hh-mm-ss").toStdString() + "-" + name + ".jpg", src);
 }
@@ -72,17 +72,10 @@ void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) c
 void ImageViewer1::ToProcess()
 {
     if (viewer_map_.empty()) return;
-    auto& data_set = global_state_->study_browser_.dcm_data_set_;
+    auto& data = global_state_->study_browser_.dcm_data_set_;
+    cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_instance_pixel_data(0));
+    cv::imshow("src", src);
 
-    //cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(0));
-    //cv::imshow("src", src);
-
-    /*int total = data_set.total_instances();
-    for (int i = 0; i < 10; ++i)
-    {
-        cv::Mat src(data_set.rows(), data_set.cols(), CV_8UC1, data_set.get_instance_pixel_data(i));
-        SaveOpenCVImage(std::to_string(i), src);
-    }*/
 }
 
 
