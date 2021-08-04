@@ -26,9 +26,10 @@ uchar* DcmDataSet::get_instance_raw_data(const int& slice) const
     if (slice < 0 || slice >= total_instances_) return nullptr;
     const int offset = (bits_allocated() > 8) ? 2 : 1;
     const int size = rows() * cols() * offset;
-    uchar* res = new uchar[size];
-    std::memcpy(res, instance_raw_data_list_[slice], size * sizeof(uchar));
-    return res;
+    //uchar* res = new uchar[size];
+    //std::memcpy(res, instance_raw_data_list_[slice], size * sizeof(uchar));
+    //std::copy(instance_raw_data_list_[slice], instance_raw_data_list_[slice] + size, res);
+    return instance_raw_data_list_[slice];
 }
 
 uchar* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
@@ -37,9 +38,10 @@ uchar* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
     const int offset = (bits_allocated() > 8) ? 2 : 1;
     const int size = rows() * cols() * offset;
-    uchar* res = new uchar[size];
-    std::memcpy(res, instance_raw_data_list_[slice] + frame * size, size * sizeof(uchar));
-    return res;
+    //uchar* res = new uchar[size];
+    //std::memcpy(res, instance_raw_data_list_[slice] + frame * size, size * sizeof(uchar));
+    //std::copy(instance_raw_data_list_[slice] + frame * size, instance_raw_data_list_[slice] + frame * size + size, res);
+    return instance_raw_data_list_[slice] + frame * size;
 }
 
 uchar* DcmDataSet::get_instance_pixel_data(const int& slice) const

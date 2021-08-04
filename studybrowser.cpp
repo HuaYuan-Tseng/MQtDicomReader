@@ -129,7 +129,8 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set)
     is_opening = false;
     
     //auto& data = global_state_->study_browser_.dcm_data_set_;
-    //cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_frame_pixel_data(0, 1));
+    //data.TransformPixelData();
+    //cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_instance_pixel_data(0));
     //cv::imshow("src", src);
 
     emit StartToSetupImageViewer1();

@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-    // 若不添加此行，則會有OpenGL版本的識別錯誤
+    // Identify OpenGL Version (Neeed !!)
     QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
 
     QApplication a(argc, argv);

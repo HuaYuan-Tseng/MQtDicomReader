@@ -247,7 +247,8 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
             for (int i = 0; i < frame_size; ++i)
             {
                 uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
-                std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+                //std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+                std::copy(img_ptr, img_ptr + img_size, dst_ptr + i * img_size);
             }
             
             data_set.set_instance_raw_data(dst_ptr);
@@ -268,7 +269,8 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
             for (int i = 0; i < frame_size; ++i)
             {
                 uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
-                std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+                //std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
+                std::copy(img_ptr, img_ptr + img_size, dst_ptr + i * img_size);
             }
             
             data_set.set_instance_raw_data(dst_ptr);

@@ -69,12 +69,52 @@ void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) c
         QTime::currentTime().toString("hh-mm-ss").toStdString() + "-" + name + ".jpg", src);
 }
 
+cv::Mat ImageViewer1::ConvertVTKImageToCVMat(vtkImageData* img, int slice) const
+{
+	double ww = global_state_->study_browser_.dcm_data_set_.pixel_data_window_width();
+	double wc = global_state_->study_browser_.dcm_data_set_.pixel_data_window_center();
+	double win_low = wc - 0.5 - (ww - 1) / 2;
+	double win_high = wc - 0.5 + (ww - 1) / 2;
+	const int row = img->GetDimensions()[1];
+	const int col = img->GetDimensions()[0];
+	unsigned char* gray = new unsigned char[row * col];
+	unsigned char* ptr = gray;
+
+	for (int i = 0; i < row; ++i)
+	{
+		unsigned short* data = static_cast<unsigned short*>(img->GetScalarPointer(0, i, slice));
+		for (int j = 0; j < col; ++j)
+		{
+			short HU = (*data);
+			if (HU <= win_low)
+			{
+				*(gray++) = 0;
+			}
+			else if (HU > win_high)
+			{
+				if (HU > 60000)	*(gray++) = 0;
+				else			*(gray++) = 255;
+			}
+			else
+			{
+				*(gray++) = static_cast<unsigned char>
+					(255 * ((HU - (wc - 0.5)) / (ww + 1) + 0.5));
+			}
+			data++;
+		}
+	}
+
+	cv::Mat res(row, col, CV_8UC1, ptr);
+	cv::flip(res, res, 0);
+	return res;
+}
+
 void ImageViewer1::ToProcess()
 {
     if (viewer_map_.empty()) return;
-    auto& data = global_state_->study_browser_.dcm_data_set_;
-    cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_instance_pixel_data(0));
-    cv::imshow("src", src);
+    cv::Mat src = ConvertVTKImageToCVMat(viewer_map_[ViewName::TRA]->image_data(), 0);
+    
+
 
 }
 
