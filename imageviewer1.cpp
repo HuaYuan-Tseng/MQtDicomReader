@@ -85,8 +85,8 @@ cv::Mat ImageViewer1::ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) 
 			}
 			else if (HU > win_high)
 			{
-				if (HU > 60000)	*(gray++) = 0;
-				else			*(gray++) = 255;
+				if (HU > SHRT_MAX)	*(gray++) = 0;
+				else                *(gray++) = 255;
 			}
 			else
 			{
@@ -154,12 +154,14 @@ void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) c
 }
 
 struct ShowImage {
-    int rows = 0;
-    int cols = 0;
-    int slice = 0;
-    int total_slice = 0;
-    std::vector<cv::Mat> img_list;
-    std::string win_name;
+    int                     rows = 0;
+    int                     cols = 0;
+    int                     slice = 0;
+    int                     total_slice = 0;
+    std::vector<cv::Mat>    img_list;
+    std::string             win_name;
+    cv::Point               start_pt;
+    cv::Point               curr_pt;
 };
 ShowImage   src_image_;
 ShowImage   internal_marker_1_;
@@ -172,6 +174,7 @@ void onMouse(int event, int x, int y, int flags, void* param)
 
     if (event == cv::EVENT_MOUSEWHEEL)
     {
+        // Move Slice
         if (cv::getMouseWheelDelta(flags) > 0)
         {
             src->slice = (src->slice + 1 >= src->total_slice) ? src->slice : src->slice + 1;
@@ -180,6 +183,30 @@ void onMouse(int event, int x, int y, int flags, void* param)
         {
             src->slice = (src->slice - 1 < 0) ? src->slice : src->slice - 1;
         }
+    }
+    else if (event == cv::EVENT_MOUSEMOVE)
+    {
+        // Drag Slice
+        if ((flags & cv::EVENT_FLAG_CTRLKEY) && (flags & cv::EVENT_FLAG_LBUTTON))
+        {
+            src->curr_pt = cv::Point(x, y);
+            int new_slice = src->slice - (src->curr_pt.y - src->start_pt.y);
+            if (new_slice < 0) new_slice = 0;
+            else if (new_slice >= src->total_slice) new_slice = src->total_slice - 1;
+            src->slice = new_slice;
+            src->start_pt = src->curr_pt;
+        }
+    }
+    else if (event == cv::EVENT_LBUTTONDOWN)
+    {
+        // Drag Slice
+        if (flags & cv::EVENT_FLAG_CTRLKEY)
+        {
+            src->start_pt = cv::Point(x, y);
+        }
+    }
+    else if (event == cv::EVENT_LBUTTONUP)
+    {
     }
     cv::putText(src->img_list.at(src->slice), std::to_string(src->slice),
         cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.35, cv::Scalar(255, 255, 255));
@@ -240,7 +267,9 @@ void ImageViewer1::ToProcess()
                 int label = label_img.at<int>(i, j);
                 if (label == 0) continue;
                 if (stats.at<int>(label, cv::CC_STAT_LEFT) == 0 ||
-                    stats.at<int>(label, cv::CC_STAT_TOP) == 0)
+                    stats.at<int>(label, cv::CC_STAT_TOP) == 0 ||
+                    stats.at<int>(label, cv::CC_STAT_LEFT) + stats.at<int>(label, cv::CC_STAT_WIDTH) >= col - 1 ||
+                    stats.at<int>(label, cv::CC_STAT_TOP) +  stats.at<int>(label, cv::CC_STAT_HEIGHT) >= row - 1)
                     hu_bin_img.at<uchar>(i, j) = 0;
             }
         }
