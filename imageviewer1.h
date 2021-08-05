@@ -35,7 +35,7 @@ private:
     void                            SaveOpenCVImage(const std::string name, const cv::Mat& src) const;
     cv::Mat                         ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const;
     cv::Mat                         ConvertVTKImageToShortCVMat(vtkImageData* img, int slice) const;
-    cv::Mat                         ThresholdVTKImage(vtkImageData* img, int slice, int val) const;
+    cv::Mat                         ThresholdVTKImage(vtkImageData* img, int slice, int threshold, bool reverse) const;
 
 private:
     Ui::ImageViewer1*               ui_;

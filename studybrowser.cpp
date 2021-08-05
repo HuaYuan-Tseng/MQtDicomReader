@@ -31,6 +31,7 @@ StudyBrowser::StudyBrowser(GlobalState* state, QWidget* parent) :
     QObject::connect(ui_->table_series, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectSeriesTable(const QModelIndex&)));
     QObject::connect(ui_->table_instance, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectInstanceTable(const QModelIndex&)));
 
+    this->ToLoadFromFolder();
 }
 
 StudyBrowser::~StudyBrowser()
@@ -49,12 +50,14 @@ void StudyBrowser::ToLoadFromFolder()
     QString init_path = "D:/TestCases/LungCT";
 #endif
     
-    global_state_->study_browser_.open_dir_ =
+    /*global_state_->study_browser_.open_dir_ =
             QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
                                               init_path,
                                               QFileDialog::ShowDirsOnly |
-                                              QFileDialog::DontResolveSymlinks);
+                                              QFileDialog::DontResolveSymlinks);*/
     
+    global_state_->study_browser_.open_dir_ = "D:/TestCases/LungCT/3759213/";
+
     if (global_state_->study_browser_.open_dir_.isEmpty()) return;
 
     DcmIO* dcmio = new DcmIO();

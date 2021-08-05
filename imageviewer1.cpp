@@ -3,6 +3,8 @@
 
 #include <QTime>
 
+#include <thread>
+
 ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     QWidget(parent),
     ui_(new Ui::ImageViewer1),
@@ -123,12 +125,14 @@ cv::Mat ImageViewer1::ConvertVTKImageToShortCVMat(vtkImageData* img, int slice) 
     return res;
 }
 
-cv::Mat ImageViewer1::ThresholdVTKImage(vtkImageData* img, int slice, int val) const
+cv::Mat ImageViewer1::ThresholdVTKImage(vtkImageData* img, int slice, int threshold, bool reverse) const
 {
     const int row = img->GetDimensions()[1];
     const int col = img->GetDimensions()[0];
     unsigned char* gray = new unsigned char[row * col];
     unsigned char* ptr = gray;
+    int val1 = 0, val2 = 255;
+    if (reverse) val1 = 255, val2 = 0;
 
     for (int i = 0; i < row; ++i)
     {
@@ -136,8 +140,8 @@ cv::Mat ImageViewer1::ThresholdVTKImage(vtkImageData* img, int slice, int val) c
         for (int j = 0; j < col; ++j)
         {
             short HU = *data++;
-            if (HU < val)   *gray++ = 0;
-            else            *gray++ = 255;
+            if (HU < threshold)     *gray++ = val1;
+            else                    *gray++ = val2;
         }
     }
 
@@ -166,6 +170,9 @@ struct ShowImage {
 ShowImage   src_image_;
 ShowImage   internal_marker_1_;
 ShowImage   internal_marker_2_;
+ShowImage   external_marker_1_;
+ShowImage   watershed_marker_;
+ShowImage   lung_segment_;
 
 void onMouse(int event, int x, int y, int flags, void* param)
 {
@@ -175,7 +182,7 @@ void onMouse(int event, int x, int y, int flags, void* param)
     if (event == cv::EVENT_MOUSEWHEEL)
     {
         // Move Slice
-        if (cv::getMouseWheelDelta(flags) > 0)
+        if (cv::getMouseWheelDelta(flags) < 0)
         {
             src->slice = (src->slice + 1 >= src->total_slice) ? src->slice : src->slice + 1;
         }
@@ -218,11 +225,12 @@ void ImageViewer1::ToProcess()
     if (viewer_map_.empty()) return;
     auto& data_set = global_state_->study_browser_.dcm_data_set_;
     int total_slice = data_set.total_instances();
-    
+
     // Src Image
+    int slice = 0;
     for (int i = 0; i < total_slice; ++i)
     {
-        cv::Mat src = this->ConvertVTKImageToUCharCVMat(viewer_map_[ViewName::TRA]->image_data(), i);
+        cv::Mat src = this->ConvertVTKImageToUCharCVMat(viewer_map_[ViewName::TRA]->image_data(), slice++);
         src_image_.img_list.push_back(src);
     }
     src_image_.rows = data_set.rows();
@@ -233,53 +241,201 @@ void ImageViewer1::ToProcess()
     cv::imshow(src_image_.win_name, src_image_.img_list.at(0));
     cv::setMouseCallback(src_image_.win_name, onMouse, &src_image_);
 
-    // Internal Marker - Threshold (-400)
-    int slice = 0;
-    internal_marker_1_ = src_image_;
-    for (auto& marker : internal_marker_1_.img_list)
-    {
-        cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice++, -400);
-        marker = hu_bin_img;
-    }
-    internal_marker_1_.win_name = "Internal Marker - 1";
-    cv::namedWindow(internal_marker_1_.win_name);
-    cv::imshow(internal_marker_1_.win_name, internal_marker_1_.img_list.at(0));
-    cv::setMouseCallback(internal_marker_1_.win_name, onMouse, &internal_marker_1_);
-
-    // Internal Marker - Threshold (Remove areas that attached image border)
+    // Internal Marker
     slice = 0;
     internal_marker_2_ = src_image_;
-    for (auto& marker : internal_marker_2_.img_list)
+    auto internal_marker = [&](int slice)
     {
-        cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice++, -400);
-        
-        cv::Mat label_img;
-        cv::Mat stats;
-        cv::Mat centroids;
-        cv::connectedComponentsWithStats(hu_bin_img, label_img, stats, centroids);
-
-        int row = hu_bin_img.rows;
-        int col = hu_bin_img.cols;
-        for (int i = 0; i < row; ++i)
+        for (; slice < total_slice; slice += 3)
         {
-            for (int j = 0; j < col; ++j)
-            {
-                int label = label_img.at<int>(i, j);
-                if (label == 0) continue;
-                if (stats.at<int>(label, cv::CC_STAT_LEFT) == 0 ||
-                    stats.at<int>(label, cv::CC_STAT_TOP) == 0 ||
-                    stats.at<int>(label, cv::CC_STAT_LEFT) + stats.at<int>(label, cv::CC_STAT_WIDTH) >= col - 1 ||
-                    stats.at<int>(label, cv::CC_STAT_TOP) +  stats.at<int>(label, cv::CC_STAT_HEIGHT) >= row - 1)
-                    hu_bin_img.at<uchar>(i, j) = 0;
-            }
-        }
+            cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice, -400, true);
 
-       marker = hu_bin_img;
-    }
+            cv::Mat label_img;
+            cv::Mat stats;
+            cv::Mat centroids;
+            int label_cnt = 0;
+            label_cnt = cv::connectedComponentsWithStats(hu_bin_img, label_img, stats, centroids);
+
+            int row = hu_bin_img.rows;
+            int col = hu_bin_img.cols;
+            std::vector<uchar> color(label_cnt);
+            for (int i = 0; i < label_cnt; ++i)
+            {
+                if (stats.at<int>(i, cv::CC_STAT_LEFT) == 0 ||
+                    stats.at<int>(i, cv::CC_STAT_TOP) == 0 ||
+                    stats.at<int>(i, cv::CC_STAT_LEFT) + stats.at<int>(i, cv::CC_STAT_WIDTH) >= col - 1 ||
+                    stats.at<int>(i, cv::CC_STAT_TOP) + stats.at<int>(i, cv::CC_STAT_HEIGHT) >= row - 1 )
+                    color[i] = 0;
+                else
+                    color[i] = 255;
+            }
+
+            for (int i = 0; i < row; ++i)
+            {
+                uchar* hu_ptr = hu_bin_img.ptr<uchar>(i);
+                for (int j = 0; j < col; ++j)
+                {
+                    int label = label_img.at<int>(i, j);
+                    hu_ptr[j] = color[label];
+                }
+            }
+
+            cv::Mat res_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+            cv::morphologyEx(hu_bin_img, hu_bin_img, cv::MORPH_OPEN, res_elem, cv::Point(-1, -1), 2);
+
+            internal_marker_2_.img_list.at(slice) = hu_bin_img;
+        }
+    };
+    
+    std::thread t4(internal_marker, 0);
+    std::thread t5(internal_marker, 1);
+    std::thread t6(internal_marker, 2);
+    t4.join();
+    t5.join();
+    t6.join();
     internal_marker_2_.win_name = "Internal Marker - 2";
     cv::namedWindow(internal_marker_2_.win_name);
     cv::imshow(internal_marker_2_.win_name, internal_marker_2_.img_list.at(0));
     cv::setMouseCallback(internal_marker_2_.win_name, onMouse, &internal_marker_2_);
+
+    // External Marker
+    slice = 0;
+    external_marker_1_ = src_image_;
+    auto external_marker = [&](int slice) 
+    {
+        for (; slice < total_slice; slice += 3)
+        {
+            cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice, -400, true);
+            
+            //cv::Mat elem = internal_marker_2_.img_list.at(slice);
+            cv::Mat elem_a = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+            cv::Mat elem_b = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(49, 49));
+            cv::Mat external_a, external_b;
+            cv::morphologyEx(hu_bin_img, external_a, cv::MORPH_DILATE, elem_a, cv::Point(-1, -1), 1);
+            cv::morphologyEx(hu_bin_img, external_b, cv::MORPH_DILATE, elem_b, cv::Point(-1, -1), 1);
+            cv::Mat external_res;
+            external_res = external_a ^ external_b;
+            //external_res = external_b - external_a;
+
+            external_marker_1_.img_list.at(slice) = external_res;
+        }
+    };
+    std::thread t1(external_marker, 0);
+    std::thread t2(external_marker, 1);
+    std::thread t3(external_marker, 2);
+    t1.join();
+    t2.join();
+    t3.join();
+    external_marker_1_.win_name = "External Marker - 1";
+    cv::namedWindow(external_marker_1_.win_name);
+    cv::imshow(external_marker_1_.win_name, external_marker_1_.img_list.at(0));
+    cv::setMouseCallback(external_marker_1_.win_name, onMouse, &external_marker_1_);
+
+    // Watershed Marker
+    watershed_marker_ = src_image_;
+    auto watershed_marker = [&](int slice)
+    {
+        for (; slice < total_slice; slice += 3)
+        {
+            cv::Mat res = cv::Mat::zeros(data_set.rows(), data_set.cols(), CV_8UC1);
+            res += internal_marker_2_.img_list.at(slice) / 255 * 255;
+            res += external_marker_1_.img_list.at(slice) / 255 * 128;
+            watershed_marker_.img_list.at(slice) = res;
+        }
+    };
+    std::thread t7(watershed_marker, 0);
+    std::thread t8(watershed_marker, 1);
+    std::thread t9(watershed_marker, 2);
+    t7.join();
+    t8.join();
+    t9.join();
+    watershed_marker_.win_name = "Watershed Marker";
+    cv::namedWindow(watershed_marker_.win_name);
+    cv::imshow(watershed_marker_.win_name, watershed_marker_.img_list.at(0));
+    cv::setMouseCallback(watershed_marker_.win_name, onMouse, &watershed_marker_);
+
+    // Lung Segmentation
+    lung_segment_ = src_image_;
+    auto lung_segment = [&](int slice)
+    {
+        for (; slice < total_slice; slice += 3)
+        {
+            cv::Mat src = src_image_.img_list.at(slice);
+
+            // Sobel
+            cv::Mat grad_x, grad_y;
+            cv::Sobel(src, grad_x, CV_8UC1, 1, 0, 3);
+            cv::Sobel(src, grad_y, CV_8UC1, 0, 1, 3);
+            cv::convertScaleAbs(grad_x, grad_x);
+            cv::convertScaleAbs(grad_y, grad_y);
+
+            int max = 0;
+            int row = data_set.rows();
+            int col = data_set.cols();
+            cv::Mat grad_res(row, col, CV_8UC1);
+            for (int i = 0; i < row; ++i)
+            {
+                for (int j = 0; j < col; ++j)
+                {
+                    int gx = grad_x.at<uchar>(i, j);
+                    int gy = grad_y.at<uchar>(i, j);
+                    int grad = cv::saturate_cast<uchar>(gx + gy);
+                    grad_res.at<uchar>(i, j) = grad;
+                    if (grad > max) max = grad;
+                }
+            }
+            grad_res = grad_res * (255 / max);
+
+            // Watershed
+            cv::Mat watershed_marker(row, col, CV_32SC1); 
+            cv::Mat org_marker = watershed_marker_.img_list.at(slice);
+            org_marker.convertTo(watershed_marker, CV_32SC1);
+            cv::cvtColor(grad_res, grad_res, CV_GRAY2RGB);
+            cv::watershed(grad_res, watershed_marker);
+
+            cv::Mat watershed;
+            watershed_marker.convertTo(watershed, CV_8UC1);
+            cv::threshold(watershed, watershed, 128, 255, cv::THRESH_BINARY);
+
+            cv::Mat outline;
+            cv::Mat elem_out = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+            cv::morphologyEx(watershed, outline, cv::MORPH_GRADIENT, elem_out, cv::Point(-1, -1), 1);
+
+            unsigned char arr[49] = { 0, 0, 1, 1, 1, 0, 0,
+                                        0, 1, 1, 1, 1, 1, 0,
+                                        1, 1, 1, 1, 1, 1, 1,
+                                        1, 1, 1, 1, 1, 1, 1,
+                                        1, 1, 1, 1, 1, 1, 1,
+                                        0, 1, 1, 1, 1, 1, 0,
+                                        0, 0, 1, 1, 1, 0, 0 };
+            cv::Mat elem_black = cv::Mat(7, 7, CV_8UC1, arr);
+            cv::Mat inclusion;
+            cv::morphologyEx(outline, inclusion, cv::MORPH_BLACKHAT, elem_black, cv::Point(-1, -1), 1);
+            outline += inclusion;
+
+            cv::Mat lung_filter;
+            cv::bitwise_or(internal_marker_2_.img_list.at(slice), outline, lung_filter);
+
+            cv::Mat res;
+            cv::Mat elem_lung = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+            cv::morphologyEx(lung_filter, res, cv::MORPH_CLOSE, elem_lung, cv::Point(-1, -1), 4);
+
+            cv::Mat lung;
+            src.copyTo(lung, res);
+
+            lung_segment_.img_list.at(slice) = lung;
+        }
+    };
+    std::thread t10(lung_segment, 0);
+    std::thread t11(lung_segment, 1);
+    std::thread t12(lung_segment, 2);
+    t10.join();
+    t11.join();
+    t12.join();
+    lung_segment_.win_name = "Lung Segment";
+    cv::namedWindow(lung_segment_.win_name);
+    cv::imshow(lung_segment_.win_name, lung_segment_.img_list.at(0));
+    cv::setMouseCallback(lung_segment_.win_name, onMouse, &lung_segment_);
 
 }
 
