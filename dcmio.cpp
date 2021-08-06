@@ -7,6 +7,9 @@
 #include <dcmtk/ofstd/ofcond.h>
 #include <dcmtk/dcmdata/dctk.h>
 #include <dcmtk/dcmjpeg/djdecode.h>
+#include <dcmtk/dcmjpeg/djrplol.h>
+#include <dcmtk/dcmjpeg/djrploss.h>
+#include <dcmtk/dcmjpls/djdecode.h>
 #include <dcmtk/dcmdata/dcrledrg.h>
 #include <dcmtk/dcmimgle/dcmimage.h>
 
@@ -191,92 +194,46 @@ void DcmIO::GetInstanceDataSet(DcmInstance& instance, DcmDataSet& data_set, doub
     OFCondition result = format->loadFile(OFFilename(instance.file_path_.toLocal8Bit()));
     if (result.bad()) return;
 
-    std::string loss_less_trans_uid = "1.2.840.10008.1.2.4.70";
-    std::string loss_trans_uid = "1.2.840.10008.1.2.4.51";
-    std::string loss_less_p14 = "1.2.840.10008.1.2.4.57";
-    std::string lossy_p1 = "1.2.840.10008.1.2.4.50";
-    std::string lossy_rle = "1.2.840.10008.1.2.5";
-
-    //E_TransferSyntax transfer = format->getDataset()->getOriginalXfer();
-
     OFString str;
     result = format->getDataset()->findAndGetOFString(DCM_SliceLocation, str);
     if (result.good())  location = std::stod(str.c_str());
     else                location = 0.0;
 
-    bool is_compressed = false;
-    const char* syntax = nullptr;
-    format->getMetaInfo()->findAndGetString(DCM_TransferSyntaxUID, syntax);
-
-    if (syntax == nullptr)
+    DcmRLEDecoderRegistration::registerCodecs();
+    DJDecoderRegistration::registerCodecs();
+    DJLSDecoderRegistration::registerCodecs();
+    
+    DcmElement* elem;
+    format->getDataset()->findAndGetElement(DCM_PixelData, elem);
+    DcmPixelData* pixel_data = OFstatic_cast(DcmPixelData*, elem);
+    
+    Uint32 length = 0;
+    int frames_cnt = data_set.frames_per_instance();
+    if (pixel_data && pixel_data->getUncompressedFrameSize(format->getDataset(), length).bad())
     {
-        is_compressed = false;
+        length = data_set.rows() * data_set.cols();
     }
-    else
+    if (length & 1) ++length;
+    OFString decompressed_color_model;
+    Uint32 start_fragment = 0;
+    DcmFileCache* cache = nullptr;
+    uchar* res = new uchar[length * frames_cnt];
+    for (int i = 0; i < frames_cnt; ++i)
     {
-        if (syntax == loss_less_trans_uid || syntax == loss_trans_uid ||
-                syntax == loss_less_p14 || syntax == lossy_p1)
-        {
-            DJDecoderRegistration::registerCodecs();
-            format->getDataset()->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
-            DJDecoderRegistration::cleanup();
-            is_compressed = true;
-        }
-        else if (syntax == lossy_rle)
-        {
-            DcmRLEDecoderRegistration::registerCodecs();
-            format->getDataset()->chooseRepresentation(EXS_LittleEndianExplicit, nullptr);
-            DcmRLEDecoderRegistration::cleanup();
-            is_compressed = true;
-        }
+        Uint32 offset = i * length;
+        OFCondition test = pixel_data->getUncompressedFrame(format->getDataset(), 
+                                                            i, 
+                                                            start_fragment, 
+                                                            res + offset, 
+                                                            length, 
+                                                            decompressed_color_model, 
+                                                            cache);
     }
-
-    DicomImage* dcm_image = nullptr;
-    if (is_compressed)
-    {
-        dcm_image = new DicomImage((DcmObject*)(format->getDataset()),
-                                               format->getDataset()->getOriginalXfer(),
-                                               CIF_TakeOverExternalDataset);
-        if (dcm_image->getStatus() == EIS_Normal)
-        {
-            // getOutputDataSize() is just for single frame.
-            const int frame_size = data_set.frames_per_instance();
-            const ulong img_size = dcm_image->getOutputDataSize(data_set.bits_stored());
-            uchar* dst_ptr = new uchar[frame_size * img_size];
-            
-            for (int i = 0; i < frame_size; ++i)
-            {
-                uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
-                //std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
-                std::copy(img_ptr, img_ptr + img_size, dst_ptr + i * img_size);
-            }
-            
-            data_set.set_instance_raw_data(dst_ptr);
-        }
-    }
-    else
-    {
-        dcm_image = new DicomImage(format,
-                                   format->getDataset()->getOriginalXfer(),
-                                   CIF_TakeOverExternalDataset);
-        if (dcm_image->getStatus() == EIS_Normal)
-        {
-            // getOutputDataSize() is just for single frame.
-            const int frame_size = data_set.frames_per_instance();
-            const ulong img_size = dcm_image->getOutputDataSize(data_set.bits_stored());
-            uchar* dst_ptr = new uchar[frame_size * img_size];
-            
-            for (int i = 0; i < frame_size; ++i)
-            {
-                uchar* img_ptr = (uchar*)(dcm_image->getOutputData(data_set.bits_stored(), i));
-                //std::memcpy(dst_ptr + i * img_size, img_ptr, img_size);
-                std::copy(img_ptr, img_ptr + img_size, dst_ptr + i * img_size);
-            }
-            
-            data_set.set_instance_raw_data(dst_ptr);
-        }
-    }
-    delete dcm_image;
+    data_set.set_instance_raw_data(res);
+    DcmRLEDecoderRegistration::cleanup();
+    DJDecoderRegistration::cleanup();
+    DJLSDecoderRegistration::cleanup();
+    
 }
 
 void DcmIO::GetInstanceMetaData(DcmInstance& instance, DcmDataSet& data_set)

@@ -7,7 +7,6 @@
 class DcmDataSet {
 public:
     DcmDataSet();
-    DcmDataSet(DcmDataSet* data_set);
     ~DcmDataSet();
 
     void                        ClearAll();
@@ -97,7 +96,8 @@ public:
     int                         pixel_data_window_center() const { return pixel_data_window_center_; }
 
     void                        TransformPixelData();
-    void                        set_instance_raw_data(uchar* raw);
+    void                        set_instance_raw_data(uchar* const ptr);
+    
     uchar*                      get_instance_raw_data(const int& slice) const;
     uchar*                      get_instance_pixel_data(const int& slice) const;
     uchar*                      get_frame_raw_data(const int& slice, const int& frame) const;
@@ -143,8 +143,8 @@ private:
     std::vector<int>            window_width_ = {};
     std::vector<int>            window_center_ = {};
 
-    std::vector<uchar*>         instance_raw_data_list_ = {};       // for input
-    std::vector<uchar*>         instance_pixel_data_list_ = {};     // for output
+    std::vector<uchar*>         instance_raw_data_list_ = {};
+    std::vector<uchar*>         instance_pixel_data_list_ = {};
 
     void                        ConvertRawData2PixelData();
 };

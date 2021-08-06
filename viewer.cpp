@@ -99,27 +99,51 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
 }
 
 vtkSmartPointer<vtkImageData> Viewer::InitVTKImageData(const DcmDataSet& data_set)
-{
+{   
     vtkSmartPointer<vtkImageData> res = vtkSmartPointer<vtkImageData>::New();
     res->Initialize();
     res->SetOrigin(0, 0, 0);
     res->SetSpacing(spacing_[0], spacing_[1], spacing_[2]);
     res->SetDimensions(dimension_[0], dimension_[1], dimension_[2]);
-    res->AllocateScalars(VTK_SHORT, 1);
-    
-    unsigned short* raw_data = nullptr;
-    unsigned short* res_data = nullptr;
-    for (int i = 0; i < dimension_[2]; ++i)
+    if (data_set.bits_allocated() <= 8)
     {
-        raw_data = (data_set.frames_per_instance() == 1) ? 
-                    reinterpret_cast<unsigned short*>(data_set.get_instance_raw_data(i)) :
-                    reinterpret_cast<unsigned short*>(data_set.get_frame_raw_data(0, i));
-        for (int j = 0; j < dimension_[1]; ++j)
+        res->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+        
+        unsigned char* raw_data = nullptr;
+        unsigned char* res_data = nullptr;
+        for (int i = 0; i < dimension_[2]; ++i)
         {
-            res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
-            for (int k = 0; k < dimension_[0]; ++k)
+            raw_data = (data_set.frames_per_instance() == 1) ? 
+                        reinterpret_cast<unsigned char*>(data_set.get_instance_raw_data(i)) :
+                        reinterpret_cast<unsigned char*>(data_set.get_frame_raw_data(0, i));
+            for (int j = 0; j < dimension_[1]; ++j)
             {
-                *res_data++ = (*raw_data++) * rescale_slope_ + rescale_intercept_;
+                res_data = static_cast<unsigned char*>(res->GetScalarPointer(0, j, i));
+                for (int k = 0; k < dimension_[0]; ++k)
+                {
+                    *res_data++ = (*raw_data++) * rescale_slope_ + rescale_intercept_;
+                }
+            }
+        }
+    }
+    else
+    {
+        res->AllocateScalars(VTK_SHORT, 1);
+        
+        unsigned short* raw_data = nullptr;
+        unsigned short* res_data = nullptr;
+        for (int i = 0; i < dimension_[2]; ++i)
+        {
+            raw_data = (data_set.frames_per_instance() == 1) ? 
+                        reinterpret_cast<unsigned short*>(data_set.get_instance_raw_data(i)) :
+                        reinterpret_cast<unsigned short*>(data_set.get_frame_raw_data(0, i));
+            for (int j = 0; j < dimension_[1]; ++j)
+            {
+                res_data = static_cast<unsigned short*>(res->GetScalarPointer(0, j, i));
+                for (int k = 0; k < dimension_[0]; ++k)
+                {
+                    *res_data++ = (*raw_data++) * rescale_slope_ + rescale_intercept_;
+                }
             }
         }
     }

@@ -31,7 +31,7 @@ StudyBrowser::StudyBrowser(GlobalState* state, QWidget* parent) :
     QObject::connect(ui_->table_series, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectSeriesTable(const QModelIndex&)));
     QObject::connect(ui_->table_instance, SIGNAL(clicked(const QModelIndex&)), this, SLOT(SelectInstanceTable(const QModelIndex&)));
 
-    this->ToLoadFromFolder();
+    //this->ToLoadFromFolder();
 }
 
 StudyBrowser::~StudyBrowser()
@@ -50,13 +50,13 @@ void StudyBrowser::ToLoadFromFolder()
     QString init_path = "D:/TestCases/LungCT";
 #endif
     
-    /*global_state_->study_browser_.open_dir_ =
+    global_state_->study_browser_.open_dir_ =
             QFileDialog::getExistingDirectory(this, "Select Dicom Folder",
                                               init_path,
                                               QFileDialog::ShowDirsOnly |
-                                              QFileDialog::DontResolveSymlinks);*/
+                                              QFileDialog::DontResolveSymlinks);
     
-    global_state_->study_browser_.open_dir_ = "D:/TestCases/LungCT/3759213/";
+    //global_state_->study_browser_.open_dir_ = "D:/TestCases/LungCT/3759213/";
 
     if (global_state_->study_browser_.open_dir_.isEmpty()) return;
 
@@ -133,7 +133,7 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set)
     
     //auto& data = global_state_->study_browser_.dcm_data_set_;
     //data.TransformPixelData();
-    //cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_instance_pixel_data(0));
+    //cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_frame_pixel_data(0, 10));
     //cv::imshow("src", src);
 
     emit StartToSetupImageViewer1();

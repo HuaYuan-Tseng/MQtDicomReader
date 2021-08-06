@@ -5,13 +5,6 @@ DcmDataSet::DcmDataSet()
 {
 }
 
-DcmDataSet::DcmDataSet(DcmDataSet* data_set)
-{
-    this->patient_name_ = data_set->patient_name();
-    this->patient_id_ = data_set->patient_id();
-    this->study_instance_uid() = data_set->study_instance_uid();
-}
-
 DcmDataSet::~DcmDataSet()
 {
     ClearAll();
@@ -19,16 +12,14 @@ DcmDataSet::~DcmDataSet()
 
 void DcmDataSet::TransformPixelData() { ConvertRawData2PixelData(); }
 
-void DcmDataSet::set_instance_raw_data(uchar* raw) { instance_raw_data_list_.push_back(raw); }
+void DcmDataSet::set_instance_raw_data(uchar* const ptr)
+{ 
+    instance_raw_data_list_.push_back(ptr);
+}
 
 uchar* DcmDataSet::get_instance_raw_data(const int& slice) const
 {
     if (slice < 0 || slice >= total_instances_) return nullptr;
-    const int offset = (bits_allocated() > 8) ? 2 : 1;
-    const int size = rows() * cols() * offset;
-    //uchar* res = new uchar[size];
-    //std::memcpy(res, instance_raw_data_list_[slice], size * sizeof(uchar));
-    //std::copy(instance_raw_data_list_[slice], instance_raw_data_list_[slice] + size, res);
     return instance_raw_data_list_[slice];
 }
 
@@ -38,9 +29,6 @@ uchar* DcmDataSet::get_frame_raw_data(const int& slice, const int& frame) const
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
     const int offset = (bits_allocated() > 8) ? 2 : 1;
     const int size = rows() * cols() * offset;
-    //uchar* res = new uchar[size];
-    //std::memcpy(res, instance_raw_data_list_[slice] + frame * size, size * sizeof(uchar));
-    //std::copy(instance_raw_data_list_[slice] + frame * size, instance_raw_data_list_[slice] + frame * size + size, res);
     return instance_raw_data_list_[slice] + frame * size;
 }
 
@@ -58,7 +46,8 @@ uchar* DcmDataSet::get_frame_pixel_data(const int& slice, const int& frame) cons
         const_cast<DcmDataSet*>(this)->ConvertRawData2PixelData();
     if (slice < 0 || slice >= total_instances_) return nullptr;
     if (frame < 0 || frame >= frames_per_instance_) return nullptr;
-    return instance_pixel_data_list_[slice] + frame * rows_ * cols_;
+    const int size = rows() * cols();
+    return instance_pixel_data_list_[slice] + frame * size;
 }
 
 void DcmDataSet::ConvertRawData2PixelData()
@@ -71,8 +60,6 @@ void DcmDataSet::ConvertRawData2PixelData()
 
     if (!instance_pixel_data_list_.empty())
     {
-        for (auto ptr : instance_pixel_data_list_)
-            delete[] ptr;
         instance_pixel_data_list_.clear();
         instance_pixel_data_list_.shrink_to_fit();
     }
@@ -108,20 +95,20 @@ void DcmDataSet::ConvertRawData2PixelData()
 
             if (HU <= win_low)
             {
-                *(img++) = 0;
+                *(ptr++) = 0;
             }
             else if (HU > win_high)
             {
-                if (HU > 60000.0)   *(img++) = 0;
-                else                *(img++) = 255;
+                if (HU > 60000.0)   *(ptr++) = 0;
+                else                *(ptr++) = 255;
             }
             else
             {
-                *(img++) = static_cast<uchar>
+                *(ptr++) = static_cast<uchar>
                     (255 * ((HU - (wc - 0.5)) / (ww + 1) + 0.5));
             }
         }
-        instance_pixel_data_list_.push_back(ptr);
+        instance_pixel_data_list_.push_back(img);
     }
 
 }
