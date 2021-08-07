@@ -2,8 +2,9 @@
 #include "ui_imageviewer1.h"
 
 #include <QTime>
-
 #include <thread>
+
+#include "cvtest.h"
 
 ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     QWidget(parent),
@@ -157,98 +158,59 @@ void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) c
 		QTime::currentTime().toString("hh-mm-ss").toStdString() + "-" + name + ".jpg", src);
 }
 
-struct ShowImage {
-    int                     rows = 0;
-    int                     cols = 0;
-    int                     slice = 0;
-    int                     total_slice = 0;
-    std::vector<cv::Mat>    img_list;
-    std::string             win_name;
-    cv::Point               start_pt;
-    cv::Point               curr_pt;
-};
-ShowImage   src_image_;
-ShowImage   internal_marker_1_;
-ShowImage   internal_marker_2_;
-ShowImage   external_marker_1_;
-ShowImage   watershed_marker_;
-ShowImage   lung_segment_;
-
-void onMouse(int event, int x, int y, int flags, void* param)
-{
-    ShowImage* src = reinterpret_cast<ShowImage*>(param);
-    if (x < 0 || x >= src->cols || y < 0 || y >= src->rows) return;
-
-    if (event == cv::EVENT_MOUSEWHEEL)
-    {
-        // Move Slice
-        if (cv::getMouseWheelDelta(flags) < 0)
-        {
-            src->slice = (src->slice + 1 >= src->total_slice) ? src->slice : src->slice + 1;
-        }
-        else
-        {
-            src->slice = (src->slice - 1 < 0) ? src->slice : src->slice - 1;
-        }
-    }
-    else if (event == cv::EVENT_MOUSEMOVE)
-    {
-        // Drag Slice
-        if ((flags & cv::EVENT_FLAG_CTRLKEY) && (flags & cv::EVENT_FLAG_LBUTTON))
-        {
-            src->curr_pt = cv::Point(x, y);
-            int new_slice = src->slice - (src->curr_pt.y - src->start_pt.y);
-            if (new_slice < 0) new_slice = 0;
-            else if (new_slice >= src->total_slice) new_slice = src->total_slice - 1;
-            src->slice = new_slice;
-            src->start_pt = src->curr_pt;
-        }
-    }
-    else if (event == cv::EVENT_LBUTTONDOWN)
-    {
-        // Drag Slice
-        if (flags & cv::EVENT_FLAG_CTRLKEY)
-        {
-            src->start_pt = cv::Point(x, y);
-        }
-    }
-    else if (event == cv::EVENT_LBUTTONUP)
-    {
-    }
-    cv::putText(src->img_list.at(src->slice), std::to_string(src->slice),
-        cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.35, cv::Scalar(255, 255, 255));
-    cv::imshow(src->win_name, src->img_list.at(src->slice));
-}
+CVTest cv_src;
+CVTest cv_bin;
+CVTest cv_internal_marker;
+CVTest cv_external_marker;
+CVTest cv_watershed_marker;
+CVTest cv_lung_segment;
 
 void ImageViewer1::ToProcess()
 {
     if (viewer_map_.empty()) return;
     auto& data_set = global_state_->study_browser_.dcm_data_set_;
     int total_slice = data_set.total_instances();
+    int rows = data_set.rows();
+    int cols = data_set.cols();
 
     // Src Image
-    int slice = 0;
-    for (int i = 0; i < total_slice; ++i)
+    cv_src.set_property(rows, cols, total_slice, "Src");
+    auto build_src = [&](int slice)
     {
-        cv::Mat src = this->ConvertVTKImageToUCharCVMat(viewer_map_[ViewName::TRA]->image_data(), slice++);
-        src_image_.img_list.push_back(src);
-    }
-    src_image_.rows = data_set.rows();
-    src_image_.cols = data_set.cols();
-    src_image_.total_slice = total_slice;
-    src_image_.win_name = "Src";
-    cv::namedWindow(src_image_.win_name);
-    cv::imshow(src_image_.win_name, src_image_.img_list.at(0));
-    cv::setMouseCallback(src_image_.win_name, onMouse, &src_image_);
+        for (int i = slice; i < total_slice; i += 2)
+        {
+            cv::Mat src = this->ConvertVTKImageToUCharCVMat(viewer_map_[ViewName::TRA]->image_data(), i);
+            cv_src.set_image(src, i);
+        }
+    };
+    std::thread th_src_0(build_src, 0);
+    std::thread th_src_1(build_src, 1);
+    th_src_0.join();    th_src_1.join();
+    cv_src.display();
+    
+    // Binary Image
+    cv_bin.set_property(rows, cols, total_slice, "Binary");
+    auto build_bin = [&](int slice)
+    {
+        for (int i = slice; i < total_slice; i += 2)
+        {
+            cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), i, -400, true);
+            cv_bin.set_image(hu_bin_img, i);
+        }
+    };
+    std::thread th_bin_0(build_bin, 0);
+    std::thread th_bin_1(build_bin, 1);
+    th_bin_0.join();    th_bin_1.join();
+    cv_bin.display();
 
     // Internal Marker
-    slice = 0;
-    internal_marker_2_ = src_image_;
-    auto internal_marker = [&](int slice)
+    cv_internal_marker.set_property(rows, cols, total_slice, "Internal Marker");
+    cv_internal_marker.set_image(cv_bin.get_all_image());
+    auto build_internal_marker = [&](int slice)
     {
-        for (; slice < total_slice; slice += 3)
+        for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice, -400, true);
+            cv::Mat hu_bin_img = cv_internal_marker.get_image(i);
 
             cv::Mat label_img;
             cv::Mat stats;
@@ -283,31 +245,25 @@ void ImageViewer1::ToProcess()
             cv::Mat res_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
             cv::morphologyEx(hu_bin_img, hu_bin_img, cv::MORPH_OPEN, res_elem, cv::Point(-1, -1), 2);
 
-            internal_marker_2_.img_list.at(slice) = hu_bin_img;
+            cv_internal_marker.set_image(hu_bin_img, i);
         }
     };
+    std::thread th_internal_0(build_internal_marker, 0);
+    std::thread th_internal_1(build_internal_marker, 1);
+    std::thread th_internal_2(build_internal_marker, 2);
+    th_internal_0.join();  th_internal_1.join(); th_internal_2.join();
+    cv_internal_marker.display();
     
-    std::thread t4(internal_marker, 0);
-    std::thread t5(internal_marker, 1);
-    std::thread t6(internal_marker, 2);
-    t4.join();
-    t5.join();
-    t6.join();
-    internal_marker_2_.win_name = "Internal Marker - 2";
-    cv::namedWindow(internal_marker_2_.win_name);
-    cv::imshow(internal_marker_2_.win_name, internal_marker_2_.img_list.at(0));
-    cv::setMouseCallback(internal_marker_2_.win_name, onMouse, &internal_marker_2_);
 
     // External Marker
-    slice = 0;
-    external_marker_1_ = src_image_;
-    auto external_marker = [&](int slice) 
+    cv_external_marker.set_property(rows, cols, total_slice, "External Marker");
+    cv_external_marker.set_image(cv_bin.get_all_image());
+    auto build_external_marker = [&](int slice) 
     {
-        for (; slice < total_slice; slice += 3)
+        for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), slice, -400, true);
+            cv::Mat hu_bin_img = cv_external_marker.get_image(i);
             
-            //cv::Mat elem = internal_marker_2_.img_list.at(slice);
             cv::Mat elem_a = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
             cv::Mat elem_b = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(49, 49));
             cv::Mat external_a, external_b;
@@ -315,52 +271,41 @@ void ImageViewer1::ToProcess()
             cv::morphologyEx(hu_bin_img, external_b, cv::MORPH_DILATE, elem_b, cv::Point(-1, -1), 1);
             cv::Mat external_res;
             external_res = external_a ^ external_b;
-            //external_res = external_b - external_a;
 
-            external_marker_1_.img_list.at(slice) = external_res;
+            cv_external_marker.set_image(external_res, i);
         }
     };
-    std::thread t1(external_marker, 0);
-    std::thread t2(external_marker, 1);
-    std::thread t3(external_marker, 2);
-    t1.join();
-    t2.join();
-    t3.join();
-    external_marker_1_.win_name = "External Marker - 1";
-    cv::namedWindow(external_marker_1_.win_name);
-    cv::imshow(external_marker_1_.win_name, external_marker_1_.img_list.at(0));
-    cv::setMouseCallback(external_marker_1_.win_name, onMouse, &external_marker_1_);
+    std::thread th_external_0(build_external_marker, 0);
+    std::thread th_external_1(build_external_marker, 1);
+    std::thread th_external_2(build_external_marker, 2);
+    th_external_0.join();   th_external_1.join();   th_external_2.join();
+    cv_external_marker.display();
 
     // Watershed Marker
-    watershed_marker_ = src_image_;
-    auto watershed_marker = [&](int slice)
+    cv_watershed_marker.set_property(rows, cols, total_slice, "Watershed Marker");
+    auto build_watershed_marker = [&](int slice)
     {
-        for (; slice < total_slice; slice += 3)
+        for (int i = slice; i < total_slice; i += 3)
         {
             cv::Mat res = cv::Mat::zeros(data_set.rows(), data_set.cols(), CV_8UC1);
-            res += internal_marker_2_.img_list.at(slice) / 255 * 255;
-            res += external_marker_1_.img_list.at(slice) / 255 * 128;
-            watershed_marker_.img_list.at(slice) = res;
+            res += cv_internal_marker.get_image(i) / 255 * 255;
+            res += cv_external_marker.get_image(i) / 255 * 128;
+            cv_watershed_marker.set_image(res, i);
         }
     };
-    std::thread t7(watershed_marker, 0);
-    std::thread t8(watershed_marker, 1);
-    std::thread t9(watershed_marker, 2);
-    t7.join();
-    t8.join();
-    t9.join();
-    watershed_marker_.win_name = "Watershed Marker";
-    cv::namedWindow(watershed_marker_.win_name);
-    cv::imshow(watershed_marker_.win_name, watershed_marker_.img_list.at(0));
-    cv::setMouseCallback(watershed_marker_.win_name, onMouse, &watershed_marker_);
+    std::thread th_watershed_0(build_watershed_marker, 0);
+    std::thread th_watershed_1(build_watershed_marker, 1);
+    std::thread th_watershed_2(build_watershed_marker, 2);
+    th_watershed_0.join();  th_watershed_1.join();  th_watershed_2.join();
+    cv_watershed_marker.display();
 
     // Lung Segmentation
-    lung_segment_ = src_image_;
+    cv_lung_segment.set_property(rows, cols, total_slice, "Lung Segment");
     auto lung_segment = [&](int slice)
     {
-        for (; slice < total_slice; slice += 3)
+        for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat src = src_image_.img_list.at(slice);
+            cv::Mat src = cv_src.get_image(i);
 
             // Sobel
             cv::Mat grad_x, grad_y;
@@ -369,7 +314,7 @@ void ImageViewer1::ToProcess()
             cv::convertScaleAbs(grad_x, grad_x);
             cv::convertScaleAbs(grad_y, grad_y);
 
-            int max = 0;
+            int max = -1;
             int row = data_set.rows();
             int col = data_set.cols();
             cv::Mat grad_res(row, col, CV_8UC1);
@@ -388,7 +333,7 @@ void ImageViewer1::ToProcess()
 
             // Watershed
             cv::Mat watershed_marker(row, col, CV_32SC1); 
-            cv::Mat org_marker = watershed_marker_.img_list.at(slice);
+            cv::Mat org_marker = cv_watershed_marker.get_image(i);
             org_marker.convertTo(watershed_marker, CV_32SC1);
             cv::cvtColor(grad_res, grad_res, CV_GRAY2RGB);
             cv::watershed(grad_res, watershed_marker);
@@ -414,7 +359,7 @@ void ImageViewer1::ToProcess()
             outline += inclusion;
 
             cv::Mat lung_filter;
-            cv::bitwise_or(internal_marker_2_.img_list.at(slice), outline, lung_filter);
+            cv::bitwise_or(cv_internal_marker.get_image(i), outline, lung_filter);
 
             cv::Mat res;
             cv::Mat elem_lung = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
@@ -423,19 +368,14 @@ void ImageViewer1::ToProcess()
             cv::Mat lung;
             src.copyTo(lung, res);
 
-            lung_segment_.img_list.at(slice) = lung;
+            cv_lung_segment.set_image(lung, i);
         }
     };
-    std::thread t10(lung_segment, 0);
-    std::thread t11(lung_segment, 1);
-    std::thread t12(lung_segment, 2);
-    t10.join();
-    t11.join();
-    t12.join();
-    lung_segment_.win_name = "Lung Segment";
-    cv::namedWindow(lung_segment_.win_name);
-    cv::imshow(lung_segment_.win_name, lung_segment_.img_list.at(0));
-    cv::setMouseCallback(lung_segment_.win_name, onMouse, &lung_segment_);
+    std::thread th_lung_0(lung_segment, 0);
+    std::thread th_lung_1(lung_segment, 1);
+    std::thread th_lung_2(lung_segment, 2);
+    th_lung_0.join();   th_lung_1.join();   th_lung_2.join();
+    cv_lung_segment.display();
 
 }
 

@@ -12,6 +12,7 @@ CONFIG += release
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    cvtest.cpp \
     dcmdataset.cpp \
     dcmdatasetthread.cpp \
     dcmio.cpp \
@@ -25,6 +26,7 @@ SOURCES += \
     viewerinteractor.cpp
 
 HEADERS += \
+    cvtest.h \
     dcmdataset.h \
     dcmdatasetthread.h \
     dcmio.h \
