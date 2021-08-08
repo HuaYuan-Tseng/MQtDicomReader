@@ -22,6 +22,7 @@ public:
 
 public slots:
     void                            SetupViewers();
+    void                            ToLungSegment();
     void                            ToProcess();
 
 private:

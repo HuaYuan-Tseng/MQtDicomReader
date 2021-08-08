@@ -26,6 +26,10 @@ public:
     cv::Point               curr_pt_;
     std::string             win_name_ = "";
     std::vector<cv::Mat>    img_list_;
+    
+    bool                    is_drawing_ = false;
+    cv::Mat                 temp_display_;
+    cv::Rect                roi_;
 };
 
 #endif // CVTEST_H

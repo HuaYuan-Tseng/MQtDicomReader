@@ -20,7 +20,7 @@ void onMouse(int event, int x, int y, int flags, void* param)
     else if (event == cv::EVENT_MOUSEMOVE)
     {
         // Drag Slice
-        if ((flags & cv::EVENT_FLAG_CTRLKEY) && (flags & cv::EVENT_FLAG_LBUTTON))
+        if ((flags & cv::EVENT_FLAG_SHIFTKEY) && (flags & cv::EVENT_FLAG_LBUTTON))
         {
             src->curr_pt_ = cv::Point(x, y);
             int new_slice = src->slice_ - (src->curr_pt_.y - src->start_pt_.y);
@@ -29,20 +29,47 @@ void onMouse(int event, int x, int y, int flags, void* param)
             src->slice_ = new_slice;
             src->start_pt_ = src->curr_pt_;
         }
+        // Draw ROI
+        else if (src->is_drawing_ && (flags & cv::EVENT_FLAG_CTRLKEY) && (flags & cv::EVENT_FLAG_LBUTTON))
+        {
+            std::cout << "Drawing" << std::endl;
+            src->curr_pt_ = cv::Point(x, y);
+            src->roi_ = cv::Rect(src->start_pt_, src->curr_pt_);
+            cv::Mat org = src->temp_display_.clone();
+            cv::rectangle(org, src->roi_.tl(), src->roi_.br(), cv::Scalar(0, 255, 0), 1);
+            src->img_list_.at(src->slice_) = org;
+        }
     }
     else if (event == cv::EVENT_LBUTTONDOWN)
     {
         // Drag Slice
-        if (flags & cv::EVENT_FLAG_CTRLKEY)
+        if (flags & cv::EVENT_FLAG_SHIFTKEY)
         {
             src->start_pt_ = cv::Point(x, y);
+        }
+        // Draw ROI
+        else if (flags & cv::EVENT_FLAG_CTRLKEY)
+        {
+            src->start_pt_ = cv::Point(x, y);
+            src->is_drawing_ = true;
+            src->temp_display_ = src->img_list_.at(src->slice_);
         }
     }
     else if (event == cv::EVENT_LBUTTONUP)
     {
+        // Draw ROI
+        if (flags & cv::EVENT_FLAG_ALTKEY)
+        {
+            src->is_drawing_ = false;
+        }
     }
+    cv::Scalar color;
+    uchar pixel = src->get_image(0).at<uchar>(0, 0);
+    if (pixel <= 128) color = cv::Scalar(255, 255, 255);
+    else color = cv::Scalar(0, 0, 0);
+    
     cv::putText(src->img_list_.at(src->slice_), std::to_string(src->slice_),
-        cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.35, cv::Scalar(255, 255, 255));
+        cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.35, color);
     cv::imshow(src->win_name_, src->img_list_.at(src->slice_));
 }
 

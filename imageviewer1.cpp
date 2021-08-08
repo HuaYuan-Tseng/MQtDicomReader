@@ -13,6 +13,7 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
 {
     ui_->setupUi(this);
 
+    QObject::connect(ui_->imageButton_LungSegment, SIGNAL(clicked()), this, SLOT(ToLungSegment()));
     QObject::connect(ui_->imageButton_Process, SIGNAL(clicked()), this, SLOT(ToProcess()));
 }
 
@@ -161,14 +162,14 @@ void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) c
 		QTime::currentTime().toString("hh-mm-ss").toStdString() + "-" + name + ".jpg", src);
 }
 
-CVTest cv_src;
-CVTest cv_bin;
-CVTest cv_internal_marker;
-CVTest cv_external_marker;
-CVTest cv_watershed_marker;
-CVTest cv_lung_segment;
+CVTest cv_ls_src;
+CVTest cv_ls_bin;
+CVTest cv_ls_internal_marker;
+CVTest cv_ls_external_marker;
+CVTest cv_ls_watershed_marker;
+CVTest cv_ls_lung_segment;
 
-void ImageViewer1::ToProcess()
+void ImageViewer1::ToLungSegment()
 {
     if (viewer_map_.empty()) return;
     auto& data_set = global_state_->study_browser_.dcm_data_set_;
@@ -177,43 +178,43 @@ void ImageViewer1::ToProcess()
     int cols = data_set.cols();
 
     // Src Image
-    cv_src.set_property(rows, cols, total_slice, "Src");
+    cv_ls_src.set_property(rows, cols, total_slice, "Src");
     auto build_src = [&](int slice)
     {
         for (int i = slice; i < total_slice; i += 2)
         {
             cv::Mat src = this->ConvertVTKImageToUCharCVMat(viewer_map_[ViewName::TRA]->image_data(), i);
-            cv_src.set_image(src, i);
+            cv_ls_src.set_image(src, i);
         }
     };
     std::thread th_src_0(build_src, 0);
     std::thread th_src_1(build_src, 1);
     th_src_0.join();    th_src_1.join();
-    cv_src.display();
+    cv_ls_src.display();
     
     // Binary Image
-    cv_bin.set_property(rows, cols, total_slice, "Binary");
+    cv_ls_bin.set_property(rows, cols, total_slice, "Binary");
     auto build_bin = [&](int slice)
     {
         for (int i = slice; i < total_slice; i += 2)
         {
             cv::Mat hu_bin_img = this->ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), i, -400, true);
-            cv_bin.set_image(hu_bin_img, i);
+            cv_ls_bin.set_image(hu_bin_img, i);
         }
     };
     std::thread th_bin_0(build_bin, 0);
     std::thread th_bin_1(build_bin, 1);
     th_bin_0.join();    th_bin_1.join();
-    cv_bin.display();
+    cv_ls_bin.display();
 
     // Internal Marker
-    cv_internal_marker.set_property(rows, cols, total_slice, "Internal Marker");
-    cv_internal_marker.set_image(cv_bin.get_all_image());
+    cv_ls_internal_marker.set_property(rows, cols, total_slice, "Internal Marker");
+    cv_ls_internal_marker.set_image(cv_ls_bin.get_all_image());
     auto build_internal_marker = [&](int slice)
     {
         for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat hu_bin_img = cv_internal_marker.get_image(i);
+            cv::Mat hu_bin_img = cv_ls_internal_marker.get_image(i);
 
             cv::Mat label_img;
             cv::Mat stats;
@@ -248,24 +249,24 @@ void ImageViewer1::ToProcess()
             cv::Mat res_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
             cv::morphologyEx(hu_bin_img, hu_bin_img, cv::MORPH_OPEN, res_elem, cv::Point(-1, -1), 2);
 
-            cv_internal_marker.set_image(hu_bin_img, i);
+            cv_ls_internal_marker.set_image(hu_bin_img, i);
         }
     };
     std::thread th_internal_0(build_internal_marker, 0);
     std::thread th_internal_1(build_internal_marker, 1);
     std::thread th_internal_2(build_internal_marker, 2);
     th_internal_0.join();  th_internal_1.join(); th_internal_2.join();
-    cv_internal_marker.display();
+    cv_ls_internal_marker.display();
     
 
     // External Marker
-    cv_external_marker.set_property(rows, cols, total_slice, "External Marker");
-    cv_external_marker.set_image(cv_bin.get_all_image());
+    cv_ls_external_marker.set_property(rows, cols, total_slice, "External Marker");
+    cv_ls_external_marker.set_image(cv_ls_bin.get_all_image());
     auto build_external_marker = [&](int slice) 
     {
         for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat hu_bin_img = cv_external_marker.get_image(i);
+            cv::Mat hu_bin_img = cv_ls_external_marker.get_image(i);
             
             cv::Mat elem_a = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
             cv::Mat elem_b = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(49, 49));
@@ -275,40 +276,40 @@ void ImageViewer1::ToProcess()
             cv::Mat external_res;
             external_res = external_a ^ external_b;
 
-            cv_external_marker.set_image(external_res, i);
+            cv_ls_external_marker.set_image(external_res, i);
         }
     };
     std::thread th_external_0(build_external_marker, 0);
     std::thread th_external_1(build_external_marker, 1);
     std::thread th_external_2(build_external_marker, 2);
     th_external_0.join();   th_external_1.join();   th_external_2.join();
-    cv_external_marker.display();
+    cv_ls_external_marker.display();
 
     // Watershed Marker
-    cv_watershed_marker.set_property(rows, cols, total_slice, "Watershed Marker");
+    cv_ls_watershed_marker.set_property(rows, cols, total_slice, "Watershed Marker");
     auto build_watershed_marker = [&](int slice)
     {
         for (int i = slice; i < total_slice; i += 3)
         {
             cv::Mat res = cv::Mat::zeros(data_set.rows(), data_set.cols(), CV_8UC1);
-            res += cv_internal_marker.get_image(i) / 255 * 255;
-            res += cv_external_marker.get_image(i) / 255 * 128;
-            cv_watershed_marker.set_image(res, i);
+            res += cv_ls_internal_marker.get_image(i) / 255 * 255;
+            res += cv_ls_external_marker.get_image(i) / 255 * 128;
+            cv_ls_watershed_marker.set_image(res, i);
         }
     };
     std::thread th_watershed_0(build_watershed_marker, 0);
     std::thread th_watershed_1(build_watershed_marker, 1);
     std::thread th_watershed_2(build_watershed_marker, 2);
     th_watershed_0.join();  th_watershed_1.join();  th_watershed_2.join();
-    cv_watershed_marker.display();
+    cv_ls_watershed_marker.display();
 
     // Lung Segmentation
-    cv_lung_segment.set_property(rows, cols, total_slice, "Lung Segment");
+    cv_ls_lung_segment.set_property(rows, cols, total_slice, "Lung Segment");
     auto lung_segment = [&](int slice)
     {
         for (int i = slice; i < total_slice; i += 3)
         {
-            cv::Mat src = cv_src.get_image(i);
+            cv::Mat src = cv_ls_src.get_image(i);
 
             // Sobel
             cv::Mat grad_x, grad_y;
@@ -332,11 +333,12 @@ void ImageViewer1::ToProcess()
                     if (grad > max) max = grad;
                 }
             }
+            if (max == 0) max = 255;
             grad_res = grad_res * (255 / max);
 
             // Watershed
             cv::Mat watershed_marker(row, col, CV_32SC1); 
-            cv::Mat org_marker = cv_watershed_marker.get_image(i);
+            cv::Mat org_marker = cv_ls_watershed_marker.get_image(i);
             org_marker.convertTo(watershed_marker, CV_32SC1);
             cv::cvtColor(grad_res, grad_res, CV_GRAY2RGB);
             cv::watershed(grad_res, watershed_marker);
@@ -362,7 +364,7 @@ void ImageViewer1::ToProcess()
             outline += inclusion;
 
             cv::Mat lung_filter;
-            cv::bitwise_or(cv_internal_marker.get_image(i), outline, lung_filter);
+            cv::bitwise_or(cv_ls_internal_marker.get_image(i), outline, lung_filter);
 
             cv::Mat res;
             cv::Mat elem_lung = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
@@ -371,16 +373,139 @@ void ImageViewer1::ToProcess()
             cv::Mat lung;
             src.copyTo(lung, res);
 
-            cv_lung_segment.set_image(lung, i);
+            cv_ls_lung_segment.set_image(lung, i);
         }
     };
     std::thread th_lung_0(lung_segment, 0);
     std::thread th_lung_1(lung_segment, 1);
     std::thread th_lung_2(lung_segment, 2);
     th_lung_0.join();   th_lung_1.join();   th_lung_2.join();
-    cv_lung_segment.display();
+    cv_ls_lung_segment.display();
+    
+    while (1)
+    {
+        char key = cv::waitKey(0);
+        if (key == 27)
+        {
+            cv::destroyAllWindows();
+            break;
+        }
+    }
 
 }
 
+CVTest cv_proc_src;
+CVTest cv_proc_hu_bin;
+CVTest cv_proc_lung_bin;
+CVTest cv_proc_lung_mask;
+CVTest cv_proc_lung_area;
+
+void ImageViewer1::ToProcess()
+{
+    clock_t start, end;
+    start = clock();
+    
+    auto& data_set = global_state_->study_browser_.dcm_data_set_;
+    data_set.TransformPixelData();
+    int total_slice = data_set.total_instances();
+    int rows = data_set.rows();
+    int cols = data_set.cols();
+    
+    cv_proc_src.set_property(rows, cols, total_slice, "Src");
+    for (int i = 0; i < total_slice; ++i)
+    {
+        cv::Mat src(rows, cols, CV_8UC1, data_set.get_instance_pixel_data(i));
+        cv_proc_src.set_image(src, i);
+    }
+    cv_proc_src.display();
+    
+    cv_proc_hu_bin.set_property(rows, cols, total_slice, "HU bin");
+    for (int i = 0; i < total_slice; ++i)
+    {
+        cv::Mat hu_bin = ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), i, -400, true);
+        cv_proc_hu_bin.set_image(hu_bin, i);
+    }
+    //cv_proc_hu_bin.display();
+    
+//    cv_proc_lung_bin.set_property(rows, cols, total_slice, "Lung Bin");
+//    for (int i = 0; i < total_slice; ++i)
+//    {
+//        cv::Mat hu_bin = cv_proc_hu_bin.get_image(i);
+        
+//        cv::Mat label;
+//        cv::Mat stats;
+//        cv::Mat centroids;
+//        cv::connectedComponentsWithStats(hu_bin, label, stats, centroids);
+        
+//        int row = hu_bin.rows;
+//        int col = hu_bin.cols;
+//        cv::Mat res(row, col, CV_8UC1, cv::Scalar::all(255));
+//        for (int i = 0; i < row; ++i)
+//        {
+//            uchar* res_ptr = res.ptr<uchar>(i);
+//            int* label_ptr = label.ptr<int>(i);
+//            for (int j = 0; j < col; ++j)
+//            {
+//                int n = label_ptr[j];
+                
+//                if (stats.at<int>(n, cv::CC_STAT_LEFT) == 0 ||
+//                    stats.at<int>(n, cv::CC_STAT_TOP) == 0 ||
+//                    stats.at<int>(n, cv::CC_STAT_LEFT) + stats.at<int>(n, cv::CC_STAT_WIDTH) >= col - 1 ||
+//                    stats.at<int>(n, cv::CC_STAT_TOP) + stats.at<int>(n, cv::CC_STAT_HEIGHT) >= row - 1 )
+//                    res_ptr[j] = 0;
+//            }
+//        }
+        
+//        cv_proc_lung_bin.set_image(res, i);
+//    }
+//    cv_proc_lung_bin.display();
+    
+    cv_proc_lung_mask.set_property(rows, cols, total_slice, "Lung Mask");
+    for (int i = 0; i < total_slice; ++i)
+    {
+        cv::Mat lung_bin = cv_proc_hu_bin.get_image(i);      
+        cv::Mat lung_close, outline, blackhat;
+        cv::Mat elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::morphologyEx(lung_bin, lung_close, cv::MORPH_CLOSE, elem, cv::Point(-1, -1), 1);
+        cv::morphologyEx(lung_close, outline, cv::MORPH_GRADIENT, elem, cv::Point(-1, -1), 1);
+        cv::Mat black = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9));
+        cv::morphologyEx(outline, blackhat, cv::MORPH_BLACKHAT, black, cv::Point(-1, -1), 2);
+        outline += blackhat;
+        cv::Mat res;
+        cv::bitwise_or(lung_close, outline, res);
+        
+        cv_proc_lung_mask.set_image(res, i);
+    }
+    cv_proc_lung_mask.display();
+    
+    cv_proc_lung_area.set_property(rows, cols, total_slice, "Lung Area");
+    for (int i = 0; i < total_slice; ++i)
+    {
+        cv::Mat src = cv_proc_src.get_image(i);
+        cv::Mat lung_mask = cv_proc_lung_mask.get_image(i);
+        cv::Mat res;
+        src.copyTo(res, lung_mask);
+        
+        cv::cvtColor(res, res, cv::COLOR_GRAY2RGB);
+        cv_proc_lung_area.set_image(res, i);
+    }
+    cv_proc_lung_area.display();
+    
+    end = clock();
+    double spend_time = (double)(end - start) / CLK_TCK;
+    double one_slice_time = spend_time / total_slice;
+    std::cout << "Total spend time : " << spend_time << std::endl;
+    std::cout << "One slice time   : " << one_slice_time << std::endl;
+    
+    while (1)
+    {
+        char key = cv::waitKey(0);
+        if (key == 27) 
+        {
+            cv::destroyAllWindows();
+            break;
+        }
+    }
+}
 
 
