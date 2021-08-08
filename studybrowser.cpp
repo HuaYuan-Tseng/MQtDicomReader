@@ -112,7 +112,6 @@ void StudyBrowser::ToOpenDicomSeries()
     global_state_->study_browser_.open_patient_index_ = patient_index;
     global_state_->study_browser_.open_study_index_ = study_index;
     global_state_->study_browser_.open_series_index_ = series_index;
-
     is_opening = true;
     dcmio->moveToThread(thread);
     thread->start();
@@ -135,7 +134,7 @@ void StudyBrowser::ReceiveFromOtherThreadDcmIO(DcmDataSet* data_set)
     //data.TransformPixelData();
     //cv::Mat src(data.rows(), data.cols(), CV_8UC1, data.get_frame_pixel_data(0, 10));
     //cv::imshow("src", src);
-
+    
     emit StartToSetupImageViewer1();
     emit SwitchToImageViewer1();
 }

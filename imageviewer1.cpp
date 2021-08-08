@@ -28,6 +28,9 @@ void ImageViewer1::SetupViewers()
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
 {
+    if (viewer_map_.find(view_name) != viewer_map_.end()) 
+        viewer_map_.erase(view_name);
+    
     Viewer* viewer = new Viewer(view_name, widget, global_state_);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);

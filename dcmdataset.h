@@ -8,6 +8,12 @@ class DcmDataSet {
 public:
     DcmDataSet();
     ~DcmDataSet();
+    DcmDataSet(const DcmDataSet& data_set);
+    
+    DcmDataSet& operator = (const DcmDataSet& data_set);
+    
+    QString name_ = "";
+    void setname(QString name) { name_ = name; }
 
     void                        ClearAll();
 
@@ -121,9 +127,9 @@ private:
 
     // Image Information
     //
-    int                         rows_ = 1;
-    int                         cols_ = 1;
-    int                         total_instances_ = 1;
+    int                         rows_ = 0;
+    int                         cols_ = 0;
+    int                         total_instances_ = 0;
     int                         frames_per_instance_ = 1;
     double                      spacing_x_ = 0.0;
     double                      spacing_y_ = 0.0;
