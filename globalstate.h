@@ -14,14 +14,19 @@ enum MainStackedWidget
     IMAGE_VIEWER_1
 };
 
+enum class ViewName {
+    TRA, COR, SAG
+};
+
+enum class OperateMode {
+    GENERAL,
+    LABEL_NODULE,
+};
+
 struct Table
 {
     std::vector<QString>    header = {};
     int                     select_index = -1;
-};
-
-enum class ViewName {
-    TRA, COR, SAG
 };
 
 struct OperateViewer {
@@ -68,6 +73,8 @@ public:
                                                             {ViewName::COR, OperateViewer{ViewName::COR}} };
         
         ViewName            current_control_view_ = ViewName::TRA;
+        OperateMode         current_operate_mode_ = OperateMode::GENERAL;
+
         bool                is_draging_left_ = false;
         bool                is_draging_right_ = false;
         bool                is_pressed_shift_ = false;

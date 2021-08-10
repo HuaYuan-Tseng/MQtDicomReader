@@ -22,6 +22,9 @@ public:
 
 public slots:
     void                            SetupViewers();
+
+private slots:
+    void                            SwitchOperateMode();
     void                            ToLungSegment();
     void                            ToProcess();
 
@@ -32,6 +35,7 @@ private:
     void                            DragSlice();
     void                            ZoomIn();
     void                            ZoomOut();
+    void                            DragROI();
 
     void                            SaveOpenCVImage(const std::string name, const cv::Mat& src) const;
     cv::Mat                         ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const;

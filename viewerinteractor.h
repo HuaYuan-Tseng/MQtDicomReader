@@ -17,11 +17,9 @@
 #include "globalstate.h"
 
 enum class Event {
-    MOVE_SLICE_PLUS,
-    MOVE_SLICE_MINUS,
-	DRAG_SLICE,
-	ZOOM_IN,
-	ZOOM_OUT
+    MOVE_SLICE_PLUS,	MOVE_SLICE_MINUS,	DRAG_SLICE,
+	ZOOM_IN,			ZOOM_OUT,			
+	DRAG_ROI
 };
 
 class ViewerInteractor : public vtkInteractorStyleImage {

@@ -12,9 +12,18 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     global_state_(state)
 {
     ui_->setupUi(this);
-
-    QObject::connect(ui_->imageButton_LungSegment, SIGNAL(clicked()), this, SLOT(ToLungSegment()));
+    ui_->imageButton_label_mode->setCheckable(true);
+    ui_->imageButton_label_mode->setAutoExclusive(true);
+    
     QObject::connect(ui_->imageButton_Process, SIGNAL(clicked()), this, SLOT(ToProcess()));
+    QObject::connect(ui_->imageButton_LungSegment, SIGNAL(clicked()), this, SLOT(ToLungSegment()));
+    QObject::connect(ui_->imageButton_label_mode, &QPushButton::clicked, [&]() {
+        global_state_->image_viewer_1_.current_operate_mode_ =
+            (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE) ?
+            OperateMode::GENERAL : OperateMode::LABEL_NODULE;
+        this->SwitchOperateMode();
+    });
+    
 }
 
 ImageViewer1::~ImageViewer1()
@@ -45,7 +54,23 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     viewer->image_interactor()->AddEvent(Event::DRAG_SLICE, [&] { DragSlice(); });
     viewer->image_interactor()->AddEvent(Event::ZOOM_IN, [&]{ ZoomIn(); });
     viewer->image_interactor()->AddEvent(Event::ZOOM_OUT, [&]{ ZoomOut(); });
+    viewer->image_interactor()->AddEvent(Event::DRAG_ROI, [&] { DragROI(); });
     viewer_map_[view_name] = viewer;
+}
+
+void ImageViewer1::SwitchOperateMode()
+{
+    // Reset
+    this->ui_->imageButton_label_mode->setChecked(false);
+
+    // Set Mode-checked
+    switch (global_state_->image_viewer_1_.current_operate_mode_) {
+    case OperateMode::GENERAL :
+        break;
+    case OperateMode::LABEL_NODULE :
+        this->ui_->imageButton_label_mode->setChecked(true);
+        break;
+    }
 }
 
 void ImageViewer1::MoveSlicePlus()
@@ -71,6 +96,11 @@ void ImageViewer1::ZoomIn()
 void ImageViewer1::ZoomOut()
 {
     viewer_map_[global_state_->image_viewer_1_.current_control_view_]->Zoom(0.85);
+}
+
+void ImageViewer1::DragROI()
+{
+
 }
 
 cv::Mat ImageViewer1::ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const

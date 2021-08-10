@@ -55,6 +55,12 @@ void ViewerInteractor::OnMouseMove()
         {
             event_map_[Event::DRAG_SLICE]();
         }
+
+        // Label Nodule
+        if (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE)
+        {
+            event_map_[Event::DRAG_ROI]();
+        }
     }
     else if (global_state_->image_viewer_1_.is_draging_right_)
     {
