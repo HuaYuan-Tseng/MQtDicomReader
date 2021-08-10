@@ -100,7 +100,7 @@ void ImageViewer1::ZoomOut()
 
 void ImageViewer1::DragROI()
 {
-
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->DragROI();
 }
 
 cv::Mat ImageViewer1::ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const

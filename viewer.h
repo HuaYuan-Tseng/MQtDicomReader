@@ -33,6 +33,7 @@ public:
     void                                MoveSliceMinus();
     void                                DragSlice();
     void                                Zoom(const double rate);
+    void                                DragROI();
     
     //-------------------------------------------------------------------------------------------//
 

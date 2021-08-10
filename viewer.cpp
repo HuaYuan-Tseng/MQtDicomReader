@@ -278,3 +278,15 @@ void Viewer::Zoom(const double rate)
     image_viewer_->GetRenderer()->GetActiveCamera()->Zoom(rate);
     this->RefreshViewer();
 }
+
+void Viewer::DragROI()
+{
+    double* start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_;
+    double* curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_;
+    double* end = global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_;
+
+    std::cout << std::endl;
+    std::cout << "Start   : " << start[0] << " , " << start[1] << " , " << start[2] << std::endl;
+    std::cout << "Current : " << curr[0] << " , " << curr[1] << " , " << curr[2] << std::endl;
+    std::cout << "End     : " << end[0] << " , " << end[1] << " , " << end[2] << std::endl;
+}
