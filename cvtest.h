@@ -8,7 +8,8 @@ public:
     CVTest() = default;
     CVTest(int row, int col, int total_slice, std::string name);
     
-    void                    display();
+    void                    ClearAll();
+    void                    Display();
     void                    set_property(int row, int col, int total_slice, std::string name);
     
     void                    set_image(const cv::Mat& img, const int& slice = -1);

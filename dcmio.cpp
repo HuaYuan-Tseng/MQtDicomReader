@@ -41,7 +41,7 @@ bool DcmIO::LoadFromFolder(QString* path, DcmContent* list)
     emit send(path, list);
     emit finish();
 
-    qDebug() << "Load Folder success !";
+    qDebug() << "\nLoad Folder success !";
     return true;
 }
 

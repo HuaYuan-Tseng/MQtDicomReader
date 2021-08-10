@@ -29,8 +29,12 @@ void ImageViewer1::SetupViewers()
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
 {
-    if (viewer_map_.find(view_name) != viewer_map_.end()) 
+    auto it = viewer_map_.find(view_name);
+    if (it != viewer_map_.end())
+    {
+        delete it->second;
         viewer_map_.erase(view_name);
+    }
     
     Viewer* viewer = new Viewer(view_name, widget, global_state_);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
@@ -172,6 +176,9 @@ CVTest cv_ls_lung_segment;
 void ImageViewer1::ToLungSegment()
 {
     if (viewer_map_.empty()) return;
+    clock_t start, end;
+    start = clock();
+
     auto& data_set = global_state_->study_browser_.dcm_data_set_;
     int total_slice = data_set.total_instances();
     int rows = data_set.rows();
@@ -190,7 +197,7 @@ void ImageViewer1::ToLungSegment()
     std::thread th_src_0(build_src, 0);
     std::thread th_src_1(build_src, 1);
     th_src_0.join();    th_src_1.join();
-    cv_ls_src.display();
+    cv_ls_src.Display();
     
     // Binary Image
     cv_ls_bin.set_property(rows, cols, total_slice, "Binary");
@@ -205,7 +212,7 @@ void ImageViewer1::ToLungSegment()
     std::thread th_bin_0(build_bin, 0);
     std::thread th_bin_1(build_bin, 1);
     th_bin_0.join();    th_bin_1.join();
-    cv_ls_bin.display();
+    cv_ls_bin.Display();
 
     // Internal Marker
     cv_ls_internal_marker.set_property(rows, cols, total_slice, "Internal Marker");
@@ -227,10 +234,10 @@ void ImageViewer1::ToLungSegment()
             std::vector<uchar> color(label_cnt);
             for (int i = 0; i < label_cnt; ++i)
             {
-                if (stats.at<int>(i, cv::CC_STAT_LEFT) == 0 ||
-                    stats.at<int>(i, cv::CC_STAT_TOP) == 0 ||
-                    stats.at<int>(i, cv::CC_STAT_LEFT) + stats.at<int>(i, cv::CC_STAT_WIDTH) >= col - 1 ||
-                    stats.at<int>(i, cv::CC_STAT_TOP) + stats.at<int>(i, cv::CC_STAT_HEIGHT) >= row - 1 )
+                if (stats.at<int>(i, cv::CC_STAT_LEFT) <= 5 ||
+                    stats.at<int>(i, cv::CC_STAT_TOP) <= 5 ||
+                    stats.at<int>(i, cv::CC_STAT_LEFT) + stats.at<int>(i, cv::CC_STAT_WIDTH) >= col - 5 ||
+                    stats.at<int>(i, cv::CC_STAT_TOP) + stats.at<int>(i, cv::CC_STAT_HEIGHT) >= row - 5 )
                     color[i] = 0;
                 else
                     color[i] = 255;
@@ -256,7 +263,7 @@ void ImageViewer1::ToLungSegment()
     std::thread th_internal_1(build_internal_marker, 1);
     std::thread th_internal_2(build_internal_marker, 2);
     th_internal_0.join();  th_internal_1.join(); th_internal_2.join();
-    cv_ls_internal_marker.display();
+    cv_ls_internal_marker.Display();
     
 
     // External Marker
@@ -283,7 +290,7 @@ void ImageViewer1::ToLungSegment()
     std::thread th_external_1(build_external_marker, 1);
     std::thread th_external_2(build_external_marker, 2);
     th_external_0.join();   th_external_1.join();   th_external_2.join();
-    cv_ls_external_marker.display();
+    cv_ls_external_marker.Display();
 
     // Watershed Marker
     cv_ls_watershed_marker.set_property(rows, cols, total_slice, "Watershed Marker");
@@ -301,7 +308,7 @@ void ImageViewer1::ToLungSegment()
     std::thread th_watershed_1(build_watershed_marker, 1);
     std::thread th_watershed_2(build_watershed_marker, 2);
     th_watershed_0.join();  th_watershed_1.join();  th_watershed_2.join();
-    cv_ls_watershed_marker.display();
+    cv_ls_watershed_marker.Display();
 
     // Lung Segmentation
     cv_ls_lung_segment.set_property(rows, cols, total_slice, "Lung Segment");
@@ -351,16 +358,17 @@ void ImageViewer1::ToLungSegment()
             cv::Mat elem_out = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
             cv::morphologyEx(watershed, outline, cv::MORPH_GRADIENT, elem_out, cv::Point(-1, -1), 1);
 
-            unsigned char arr[49] = { 0, 0, 1, 1, 1, 0, 0,
+            /*unsigned char arr[49] = { 0, 0, 1, 1, 1, 0, 0,
                                         0, 1, 1, 1, 1, 1, 0,
                                         1, 1, 1, 1, 1, 1, 1,
                                         1, 1, 1, 1, 1, 1, 1,
                                         1, 1, 1, 1, 1, 1, 1,
                                         0, 1, 1, 1, 1, 1, 0,
                                         0, 0, 1, 1, 1, 0, 0 };
-            cv::Mat elem_black = cv::Mat(7, 7, CV_8UC1, arr);
+            cv::Mat elem_black = cv::Mat(7, 7, CV_8UC1, arr);*/
+            cv::Mat elem_black = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9));
             cv::Mat inclusion;
-            cv::morphologyEx(outline, inclusion, cv::MORPH_BLACKHAT, elem_black, cv::Point(-1, -1), 1);
+            cv::morphologyEx(outline, inclusion, cv::MORPH_BLACKHAT, elem_black, cv::Point(-1, -1), 2);
             outline += inclusion;
 
             cv::Mat lung_filter;
@@ -380,7 +388,13 @@ void ImageViewer1::ToLungSegment()
     std::thread th_lung_1(lung_segment, 1);
     std::thread th_lung_2(lung_segment, 2);
     th_lung_0.join();   th_lung_1.join();   th_lung_2.join();
-    cv_ls_lung_segment.display();
+    cv_ls_lung_segment.Display();
+
+    end = clock();
+    double spend_time = (double)(end - start) / CLK_TCK;
+    double one_slice_time = spend_time / total_slice;
+    std::cout << "\nTotal spend time : " << spend_time << std::endl;
+    std::cout << "One slice time   : " << one_slice_time << std::endl;
     
     while (1)
     {
@@ -388,6 +402,12 @@ void ImageViewer1::ToLungSegment()
         if (key == 27)
         {
             cv::destroyAllWindows();
+            cv_ls_src.ClearAll();
+            cv_ls_bin.ClearAll();
+            cv_ls_internal_marker.ClearAll();
+            cv_ls_external_marker.ClearAll();
+            cv_ls_watershed_marker.ClearAll();
+            cv_ls_lung_segment.ClearAll();
             break;
         }
     }
@@ -417,7 +437,7 @@ void ImageViewer1::ToProcess()
         cv::Mat src(rows, cols, CV_8UC1, data_set.get_instance_pixel_data(i));
         cv_proc_src.set_image(src, i);
     }
-    cv_proc_src.display();
+    cv_proc_src.Display();
     
     cv_proc_hu_bin.set_property(rows, cols, total_slice, "HU bin");
     for (int i = 0; i < total_slice; ++i)
@@ -427,38 +447,38 @@ void ImageViewer1::ToProcess()
     }
     //cv_proc_hu_bin.display();
     
-//    cv_proc_lung_bin.set_property(rows, cols, total_slice, "Lung Bin");
-//    for (int i = 0; i < total_slice; ++i)
-//    {
-//        cv::Mat hu_bin = cv_proc_hu_bin.get_image(i);
+    cv_proc_lung_bin.set_property(rows, cols, total_slice, "Lung Bin");
+    for (int i = 0; i < total_slice; ++i)
+    {
+        cv::Mat hu_bin = cv_proc_hu_bin.get_image(i);
         
-//        cv::Mat label;
-//        cv::Mat stats;
-//        cv::Mat centroids;
-//        cv::connectedComponentsWithStats(hu_bin, label, stats, centroids);
+        cv::Mat label;
+        cv::Mat stats;
+        cv::Mat centroids;
+        cv::connectedComponentsWithStats(hu_bin, label, stats, centroids);
         
-//        int row = hu_bin.rows;
-//        int col = hu_bin.cols;
-//        cv::Mat res(row, col, CV_8UC1, cv::Scalar::all(255));
-//        for (int i = 0; i < row; ++i)
-//        {
-//            uchar* res_ptr = res.ptr<uchar>(i);
-//            int* label_ptr = label.ptr<int>(i);
-//            for (int j = 0; j < col; ++j)
-//            {
-//                int n = label_ptr[j];
+        int row = hu_bin.rows;
+        int col = hu_bin.cols;
+        cv::Mat res(row, col, CV_8UC1, cv::Scalar::all(255));
+        for (int i = 0; i < row; ++i)
+        {
+            uchar* res_ptr = res.ptr<uchar>(i);
+            int* label_ptr = label.ptr<int>(i);
+            for (int j = 0; j < col; ++j)
+            {
+                int n = label_ptr[j];
                 
-//                if (stats.at<int>(n, cv::CC_STAT_LEFT) == 0 ||
-//                    stats.at<int>(n, cv::CC_STAT_TOP) == 0 ||
-//                    stats.at<int>(n, cv::CC_STAT_LEFT) + stats.at<int>(n, cv::CC_STAT_WIDTH) >= col - 1 ||
-//                    stats.at<int>(n, cv::CC_STAT_TOP) + stats.at<int>(n, cv::CC_STAT_HEIGHT) >= row - 1 )
-//                    res_ptr[j] = 0;
-//            }
-//        }
+                if (stats.at<int>(n, cv::CC_STAT_LEFT) <= 0 ||
+                    stats.at<int>(n, cv::CC_STAT_TOP) <= 0 ||
+                    stats.at<int>(n, cv::CC_STAT_LEFT) + stats.at<int>(n, cv::CC_STAT_WIDTH) >= col - 1 ||
+                    stats.at<int>(n, cv::CC_STAT_TOP) + stats.at<int>(n, cv::CC_STAT_HEIGHT) >= row - 1 )
+                    res_ptr[j] = 0;
+            }
+        }
         
-//        cv_proc_lung_bin.set_image(res, i);
-//    }
-//    cv_proc_lung_bin.display();
+        cv_proc_lung_bin.set_image(res, i);
+    }
+    cv_proc_lung_bin.Display();
     
     cv_proc_lung_mask.set_property(rows, cols, total_slice, "Lung Mask");
     for (int i = 0; i < total_slice; ++i)
@@ -468,15 +488,17 @@ void ImageViewer1::ToProcess()
         cv::Mat elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
         cv::morphologyEx(lung_bin, lung_close, cv::MORPH_CLOSE, elem, cv::Point(-1, -1), 1);
         cv::morphologyEx(lung_close, outline, cv::MORPH_GRADIENT, elem, cv::Point(-1, -1), 1);
+
         cv::Mat black = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9));
         cv::morphologyEx(outline, blackhat, cv::MORPH_BLACKHAT, black, cv::Point(-1, -1), 2);
         outline += blackhat;
+
         cv::Mat res;
         cv::bitwise_or(lung_close, outline, res);
         
         cv_proc_lung_mask.set_image(res, i);
     }
-    cv_proc_lung_mask.display();
+    cv_proc_lung_mask.Display();
     
     cv_proc_lung_area.set_property(rows, cols, total_slice, "Lung Area");
     for (int i = 0; i < total_slice; ++i)
@@ -489,12 +511,12 @@ void ImageViewer1::ToProcess()
         cv::cvtColor(res, res, cv::COLOR_GRAY2RGB);
         cv_proc_lung_area.set_image(res, i);
     }
-    cv_proc_lung_area.display();
+    cv_proc_lung_area.Display();
     
     end = clock();
     double spend_time = (double)(end - start) / CLK_TCK;
     double one_slice_time = spend_time / total_slice;
-    std::cout << "Total spend time : " << spend_time << std::endl;
+    std::cout << "\nTotal spend time : " << spend_time << std::endl;
     std::cout << "One slice time   : " << one_slice_time << std::endl;
     
     while (1)
@@ -503,6 +525,11 @@ void ImageViewer1::ToProcess()
         if (key == 27) 
         {
             cv::destroyAllWindows();
+            cv_proc_src.ClearAll();
+            cv_proc_hu_bin.ClearAll();
+            cv_proc_lung_bin.ClearAll();
+            cv_proc_lung_mask.ClearAll();
+            cv_proc_lung_area.ClearAll();
             break;
         }
     }

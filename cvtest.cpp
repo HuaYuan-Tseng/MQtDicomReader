@@ -90,12 +90,20 @@ void CVTest::set_property(int row, int col, int total_slice, std::string name)
     this->img_list_.resize(total_slice_);
 }
 
-void CVTest::display()
+void CVTest::Display()
 {
     if (this->img_list_.empty()) return;
     cv::namedWindow(this->win_name_);
     cv::imshow(this->win_name_, this->img_list_.at(0));
     cv::setMouseCallback(this->win_name_, onMouse, this);
+}
+
+void CVTest::ClearAll()
+{
+    for (auto& mat : img_list_) mat.release();
+    img_list_.clear();
+    img_list_.shrink_to_fit();
+    temp_display_.release();
 }
 
 void CVTest::set_image(const cv::Mat& img, const int& slice)
