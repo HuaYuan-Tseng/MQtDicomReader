@@ -52,7 +52,6 @@ void DcmIO::GetDcmMetaData(QString path, DcmContent& list)
     if (result.bad())
     {
         qDebug() << "Failed to load : " << path;
-        //qDebug() << result.text();
         delete format;
         return;
     }
@@ -185,6 +184,7 @@ bool DcmIO::LoadInstanceDataSet(std::vector<DcmInstance>* list, DcmDataSet* data
     emit send(data_set);
     emit finish();
 
+    qDebug() << "\nLoad Series success !";
     return true;
 }
 

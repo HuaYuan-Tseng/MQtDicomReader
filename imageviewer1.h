@@ -35,7 +35,8 @@ private:
     void                            DragSlice();
     void                            ZoomIn();
     void                            ZoomOut();
-    void                            DragROI();
+    void                            DrawROI();
+    void                            AddNodule();
 
     void                            SaveOpenCVImage(const std::string name, const cv::Mat& src) const;
     cv::Mat                         ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const;

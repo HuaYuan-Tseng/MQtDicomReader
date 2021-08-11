@@ -19,7 +19,7 @@
 enum class Event {
     MOVE_SLICE_PLUS,	MOVE_SLICE_MINUS,	DRAG_SLICE,
 	ZOOM_IN,			ZOOM_OUT,			
-	DRAG_ROI
+	DRAW_ROI,           ADD_NODULE
 };
 
 class ViewerInteractor : public vtkInteractorStyleImage {

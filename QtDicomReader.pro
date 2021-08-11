@@ -20,6 +20,7 @@ SOURCES += \
     imageviewer1.cpp \
     main.cpp \
     mainwindow.cpp \
+    roi.cpp \
     studybrowser.cpp \
     tableoperate.cpp \
     viewer.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     globalstate.h \
     imageviewer1.h \
     mainwindow.h \
+    roi.h \ 
     studybrowser.h \
     tableoperate.h \
     viewer.h \

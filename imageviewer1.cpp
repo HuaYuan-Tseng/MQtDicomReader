@@ -54,7 +54,8 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     viewer->image_interactor()->AddEvent(Event::DRAG_SLICE, [&] { DragSlice(); });
     viewer->image_interactor()->AddEvent(Event::ZOOM_IN, [&]{ ZoomIn(); });
     viewer->image_interactor()->AddEvent(Event::ZOOM_OUT, [&]{ ZoomOut(); });
-    viewer->image_interactor()->AddEvent(Event::DRAG_ROI, [&] { DragROI(); });
+    viewer->image_interactor()->AddEvent(Event::DRAW_ROI, [&] { DrawROI(); });
+    viewer->image_interactor()->AddEvent(Event::ADD_NODULE, [&]{ AddNodule(); });
     viewer_map_[view_name] = viewer;
 }
 
@@ -98,9 +99,14 @@ void ImageViewer1::ZoomOut()
     viewer_map_[global_state_->image_viewer_1_.current_control_view_]->Zoom(0.85);
 }
 
-void ImageViewer1::DragROI()
+void ImageViewer1::DrawROI()
 {
     viewer_map_[global_state_->image_viewer_1_.current_control_view_]->DrawROI();
+}
+
+void ImageViewer1::AddNodule()
+{
+    
 }
 
 cv::Mat ImageViewer1::ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const

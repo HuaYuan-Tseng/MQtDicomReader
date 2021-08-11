@@ -41,6 +41,7 @@ public:
     ViewName                            view_name() const { return view_name_; }
     vtkSmartPointer<vtkImageData>       image_data() const { return image_data_; }
     vtkSmartPointer<ViewerInteractor>   image_interactor() const { return image_interactor_; }
+    ROI*                                get_roi() const { return drawing_roi_; }
 
     void                                set_spacing(const double spacing[3]) { std::memcpy(spacing_, spacing, sizeof(double) * 3); }
     const double*                       spacing() const { return spacing_; }

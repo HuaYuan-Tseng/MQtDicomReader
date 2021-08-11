@@ -59,7 +59,7 @@ void ViewerInteractor::OnMouseMove()
         // Label Nodule
         if (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE)
         {
-            event_map_[Event::DRAG_ROI]();
+            event_map_[Event::DRAW_ROI]();
         }
     }
     else if (global_state_->image_viewer_1_.is_draging_right_)
@@ -124,6 +124,12 @@ void ViewerInteractor::OnLeftButtonUp()
     if (global_state_->image_viewer_1_.is_pressed_shift_)
     {
         Superclass::OnMiddleButtonUp();
+    }
+    
+    // Label Nodule
+    if (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE)
+    {
+        event_map_[Event::ADD_NODULE]();
     }
 }
 
