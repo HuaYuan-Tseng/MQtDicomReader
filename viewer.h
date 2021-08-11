@@ -21,6 +21,7 @@ VTK_MODULE_INIT(vtkRenderingFreeType)
 
 #include "dcmdataset.h"
 #include "globalstate.h"
+#include "roi.h"
 
 class Viewer {
 public:
@@ -33,7 +34,7 @@ public:
     void                                MoveSliceMinus();
     void                                DragSlice();
     void                                Zoom(const double rate);
-    void                                DragROI();
+    void                                DrawROI();
     
     //-------------------------------------------------------------------------------------------//
 
@@ -79,6 +80,8 @@ private:
     vtkSmartPointer<vtkImageViewer2>                image_viewer_ = nullptr;
     vtkSmartPointer<vtkRenderer>                    image_render_ = nullptr;
     vtkSmartPointer<ViewerInteractor>               image_interactor_ = nullptr;
+
+    ROI*                                            drawing_roi_ = nullptr;
 
     double                                          spacing_[3] = { 0 };
     int                                             dimension_[3] = { 0 };

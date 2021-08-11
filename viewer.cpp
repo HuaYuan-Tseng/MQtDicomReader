@@ -226,6 +226,7 @@ void Viewer::DragSlice()
         global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] =
             global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0];
     }
+    this->RefreshViewer();
 }
 
 double Viewer::get_zoom_rate() const
@@ -279,14 +280,17 @@ void Viewer::Zoom(const double rate)
     this->RefreshViewer();
 }
 
-void Viewer::DragROI()
+void Viewer::DrawROI()
 {
     double* start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_;
     double* curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_;
-    double* end = global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_;
-
-    std::cout << std::endl;
-    std::cout << "Start   : " << start[0] << " , " << start[1] << " , " << start[2] << std::endl;
-    std::cout << "Current : " << curr[0] << " , " << curr[1] << " , " << curr[2] << std::endl;
-    std::cout << "End     : " << end[0] << " , " << end[1] << " , " << end[2] << std::endl;
+    
+    if (drawing_roi_ != nullptr)
+    {
+        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->get_vtk_actor());
+    }
+    drawing_roi_ = new ROI(spacing_, start, curr);
+    drawing_roi_->set_vtk_actor();
+    image_viewer_->GetRenderer()->AddActor(drawing_roi_->get_vtk_actor());
+    this->RefreshViewer();
 }
