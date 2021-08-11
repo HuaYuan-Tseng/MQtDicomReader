@@ -27,6 +27,12 @@ public:
 	void						set_world_bottom_right(double* position) { world_bottom_right_ = position; }
 	double*						get_world_bottom_right() const { return world_bottom_right_; }
 
+	void						set_pixel_top_left(int* position) { pixel_top_left_ = position; }
+	int*						get_pixel_top_left() const { return pixel_top_left_; }
+
+	void						set_pixel_bottom_right(int* position) { pixel_bottom_right_ = position; }
+	int*						get_pixel_bottom_right() const { return pixel_bottom_right_; }
+
 private:
 	void						ConstructROIActor();
 
@@ -35,6 +41,8 @@ private:
 	double*						spacing_ = nullptr;
 	double*						world_top_left_ = nullptr;
 	double*						world_bottom_right_ = nullptr;
+	int*						pixel_top_left_ = nullptr;
+	int*						pixel_bottom_right_ = nullptr;
 	
 };
 

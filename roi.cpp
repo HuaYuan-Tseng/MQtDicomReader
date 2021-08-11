@@ -23,6 +23,14 @@ ROI::ROI(const ROI& roi)
 	double* src_bottom_right = roi.get_world_bottom_right();
 	world_bottom_right_ = new double[3];
 	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
+
+	int* src_pixel_top_left = roi.get_pixel_top_left();
+	pixel_top_left_ = new int[3];
+	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
+
+	int* src_pixel_bottom_right = roi.get_pixel_bottom_right();
+	pixel_bottom_right_ = new int[3];
+	std::copy(src_pixel_bottom_right, src_pixel_bottom_right + 3, pixel_bottom_right_);
 }
 
 ROI::~ROI()
@@ -31,7 +39,8 @@ ROI::~ROI()
 	if (spacing_ != nullptr)				delete[] spacing_;
 	if (world_top_left_ != nullptr)			delete[] world_top_left_;
 	if (world_bottom_right_ != nullptr)		delete[] world_bottom_right_;
-	
+	if (pixel_top_left_ != nullptr)			delete[] pixel_top_left_;
+	if (pixel_bottom_right_ != nullptr)		delete[] pixel_bottom_right_;
 }
 
 ROI& ROI::operator = (const ROI& roi)
@@ -64,6 +73,24 @@ ROI& ROI::operator = (const ROI& roi)
 	}
 	world_bottom_right_ = new double[3];
 	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
+
+	int* src_pixel_top_left = roi.get_pixel_top_left();
+	if (pixel_top_left_ != nullptr)
+	{
+		delete[] pixel_top_left_;
+		pixel_top_left_ = nullptr;
+	}
+	pixel_top_left_ = new int[3];
+	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
+
+	int* src_pixel_bottom_right = roi.get_pixel_bottom_right();
+	if (pixel_bottom_right_ != nullptr)
+	{
+		delete[] pixel_bottom_right_;
+		pixel_bottom_right_ = nullptr;
+	}
+	pixel_bottom_right_ = new int[3];
+	std::copy(src_pixel_bottom_right, src_pixel_bottom_right + 3, pixel_bottom_right_);
 
 	return *this;
 }
