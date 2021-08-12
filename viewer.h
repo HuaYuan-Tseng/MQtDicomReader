@@ -42,7 +42,7 @@ public:
     vtkSmartPointer<vtkImageData>       image_data() const { return image_data_; }
     vtkSmartPointer<vtkImageViewer2>    image_viewer() const { return image_viewer_; }
     vtkSmartPointer<ViewerInteractor>   image_interactor() const { return image_interactor_; }
-    ROI*                                roi() const { return drawing_roi_; }
+    ROI*                                roi() { return drawing_roi_; }
 
     void                                set_spacing(const double spacing[3]) { std::memcpy(spacing_, spacing, sizeof(double) * 3); }
     const double*                       spacing() const { return spacing_; }

@@ -1,6 +1,6 @@
 #include "roi.h"
 
-ROI::ROI(ViewName name, double* spacing) :
+ROI::ROI(ViewName name, std::vector<double> spacing) :
 	view_name_(name),
 	spacing_(spacing)
 {
@@ -9,100 +9,71 @@ ROI::ROI(ViewName name, double* spacing) :
 
 ROI::ROI(const ROI& roi)
 {
-	this->set_vtk_actor(roi.vtk_actor());
-
-	double* src_spacing = roi.spacing();
-	spacing_ = new double[3];
-	std::copy(src_spacing, src_spacing + 3, spacing_);
-
-	double* src_top_left = roi.world_top_left();
-	world_top_left_ = new double[3];
-	std::copy(src_top_left, src_top_left + 3, world_top_left_);
-
-	double* src_bottom_right = roi.world_bottom_right();
-	world_bottom_right_ = new double[3];
-	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
-
-	int* src_pixel_top_left = roi.pixel_top_left();
-	pixel_top_left_ = new int[3];
-	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
-
-	int* src_pixel_bottom_right = roi.pixel_bottom_right();
-	pixel_bottom_right_ = new int[3];
-	std::copy(src_pixel_bottom_right, src_pixel_bottom_right + 3, pixel_bottom_right_);
+	spacing_.assign(roi.spacing().begin(), roi.spacing().end());
+    
+    world_top_left_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
+    world_bottom_right_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
+    
+    pixel_top_left_.assign(roi.pixel_top_left().begin(), roi.pixel_top_left().end());
+    pixel_bottom_right_.assign(roi.pixel_bottom_right().begin(), roi.pixel_bottom_right().end());
+    
+    this->ConstructROIActor();
 }
 
 ROI::~ROI()
 {
-	//roi_actor_ = nullptr;
-	if (spacing_ != nullptr)				delete[] spacing_;
-	if (world_top_left_ != nullptr)			delete[] world_top_left_;
-	if (world_bottom_right_ != nullptr)		delete[] world_bottom_right_;
-	if (pixel_top_left_ != nullptr)			delete[] pixel_top_left_;
-	if (pixel_bottom_right_ != nullptr)		delete[] pixel_bottom_right_;
+	roi_actor_ = nullptr;
+	if (!spacing_.empty())
+    {
+        spacing_.clear();
+        spacing_.shrink_to_fit();
+    }
+	if (!world_top_left_.empty())
+    {
+        world_top_left_.clear();
+        world_top_left_.shrink_to_fit();
+    }
+	if (!world_bottom_right_.empty())
+    {
+        world_bottom_right_.clear();
+        world_bottom_right_.shrink_to_fit();
+    }
+	if (!pixel_top_left_.empty())
+    {
+        pixel_top_left_.clear();
+        pixel_top_left_.shrink_to_fit();
+    }
+	if (!pixel_bottom_right_.empty())
+    {
+        pixel_bottom_right_.clear();
+        pixel_bottom_right_.shrink_to_fit();
+    }
 }
 
 ROI& ROI::operator = (const ROI& roi)
 {
-	this->set_vtk_actor(roi.vtk_actor());
-
-	double* src_spacing = roi.spacing();
-	if (spacing_ != nullptr)
-	{
-		delete[] spacing_;
-		spacing_ = nullptr;
-	}
-	spacing_ = new double[3];
-	std::copy(src_spacing, src_spacing + 3, spacing_);
-
-	double* src_top_left = roi.world_top_left();
-	if (world_top_left_ != nullptr)
-	{
-		delete[] world_top_left_;
-		world_top_left_ = nullptr;
-	}
-	world_top_left_ = new double[3];
-	std::copy(src_top_left, src_top_left + 3, world_top_left_);
-
-	double* src_bottom_right = roi.world_bottom_right();
-	if (world_bottom_right_ != nullptr)
-	{
-		delete[] world_bottom_right_;
-		world_bottom_right_ = nullptr;
-	}
-	world_bottom_right_ = new double[3];
-	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
-
-	int* src_pixel_top_left = roi.pixel_top_left();
-	if (pixel_top_left_ != nullptr)
-	{
-		delete[] pixel_top_left_;
-		pixel_top_left_ = nullptr;
-	}
-	pixel_top_left_ = new int[3];
-	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
-
-	int* src_pixel_bottom_right = roi.pixel_bottom_right();
-	if (pixel_bottom_right_ != nullptr)
-	{
-		delete[] pixel_bottom_right_;
-		pixel_bottom_right_ = nullptr;
-	}
-	pixel_bottom_right_ = new int[3];
-	std::copy(src_pixel_bottom_right, src_pixel_bottom_right + 3, pixel_bottom_right_);
-
+	spacing_.assign(roi.spacing().begin(), roi.spacing().end());
+    
+    world_top_left_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
+    world_bottom_right_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
+    
+    pixel_top_left_.assign(roi.pixel_top_left().begin(), roi.pixel_top_left().end());
+    pixel_bottom_right_.assign(roi.pixel_bottom_right().begin(), roi.pixel_bottom_right().end());
+    
+    this->ConstructROIActor();
+    
 	return *this;
 }
 
 void ROI::set_vtk_actor()
 {
-	if (world_top_left_ == nullptr || world_bottom_right_ == nullptr) return;
+	if (world_top_left_.empty() || world_bottom_right_.empty()) return;
 	this->ConstructROIActor();
 }
 
 void ROI::ConstructROIActor()
 {
-	if (roi_actor_ == nullptr) roi_actor_ = vtkSmartPointer<vtkActor>::New();
+    roi_actor_ = vtkSmartPointer<vtkActor>::New();
 
 	// Vertex Order
 	// 0 3

@@ -1,6 +1,6 @@
 #include "nodule.h"
 
-Nodule::Nodule(ViewName name, double* spacing, int* dimension) :
+Nodule::Nodule(ViewName name, std::vector<double> spacing, std::vector<int> dimension) :
 	view_name_(name),
 	spacing_(spacing),
 	dimension_(dimension)
@@ -9,15 +9,23 @@ Nodule::Nodule(ViewName name, double* spacing, int* dimension) :
 
 Nodule::~Nodule()
 {
-	if (spacing_ != nullptr)		delete[] spacing_;
-	if (dimension_ != nullptr)		delete[] dimension_;
+    if (!spacing_.empty())
+    {
+        spacing_.clear();
+        spacing_.shrink_to_fit();
+    }
+    if (!dimension_.empty())
+    {
+        dimension_.clear();
+        dimension_.shrink_to_fit();
+    }
 }
 
 void Nodule::set_roi(const ROI& roi)
 {
 	label_init_slice_ = roi.pixel_top_left()[2];
 	contour_start_slice_ = contour_end_slice_ = label_init_slice_;
-	ROI copy_roi(roi);
+    ROI* copy_roi = new ROI(roi);
 	roi_list_[label_init_slice_] = copy_roi;
 }
 
@@ -62,7 +70,7 @@ bool Nodule::get_vtk_roi_actor(int slice, vtkSmartPointer<vtkActor> roi) const
 {
 	if (roi_list_.find(slice) == roi_list_.end())
 		return false;
-	roi = roi_list_.at(slice).vtk_actor();
+	roi = roi_list_.at(slice)->vtk_actor();
 	return true;
 }
 
@@ -83,13 +91,13 @@ Nodule::VTKContour Nodule::ConstructContourVTKActor(int slice, const Contour& co
 {
 	std::vector<vtkSmartPointer<vtkActor>> vtk_contour;
 
-	// 同一slice上的每個輪廓
+	// contour on same slice
 	for (const auto& list : contour)
 	{
 		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 		double pt[3];
 
-		// 同一輪廓上的每個點
+		// point on same contour
 		for (const auto& p : list)
 		{
 			pt[0] = p.x * spacing_[0];
@@ -131,14 +139,14 @@ Nodule::VTKContour Nodule::ConstructContourVTKActor(int slice, const Contour& co
 	return vtk_contour;
 }
 
-ROI Nodule::ConstructROIVTKActor(int slice)
+ROI* Nodule::ConstructROIVTKActor(int slice)
 {
-	ROI* label_slice_roi = &roi_list_[label_init_slice_];
+	ROI* label_slice_roi = roi_list_[label_init_slice_];
 
-	double* world_tl = label_slice_roi->world_top_left();
-	double* world_br = label_slice_roi->world_bottom_right();
-	double* slice_world_tl = new double[3];
-	double* slice_world_br = new double[3];
+	std::vector<double> world_tl = label_slice_roi->world_top_left();
+	std::vector<double> world_br = label_slice_roi->world_bottom_right();
+	std::vector<double> slice_world_tl(3);
+	std::vector<double> slice_world_br(3);
 	slice_world_tl[0] = world_tl[0];
 	slice_world_tl[1] = world_tl[1];
 	slice_world_tl[2] = (slice + 1) * spacing_[2] - spacing_[2] / 2;
@@ -146,10 +154,10 @@ ROI Nodule::ConstructROIVTKActor(int slice)
 	slice_world_br[1] = world_br[1];
 	slice_world_br[2] = (slice + 1) * spacing_[2] - spacing_[2] / 2;
 
-	int* pixel_tl = label_slice_roi->pixel_top_left();
-	int* pixel_br = label_slice_roi->pixel_bottom_right();
-	int* slice_pixel_tl = new int[3];
-	int* slice_pixel_br = new int[3];
+	std::vector<int> pixel_tl = label_slice_roi->pixel_top_left();
+	std::vector<int> pixel_br = label_slice_roi->pixel_bottom_right();
+	std::vector<int> slice_pixel_tl(3);
+	std::vector<int> slice_pixel_br(3);
 	slice_pixel_tl[0] = pixel_tl[0];
 	slice_pixel_tl[1] = pixel_tl[1];
 	slice_pixel_tl[2] = slice;
@@ -157,11 +165,11 @@ ROI Nodule::ConstructROIVTKActor(int slice)
 	slice_pixel_br[1] = pixel_br[1];
 	slice_pixel_br[2] = slice;
 
-	ROI slice_roi(view_name_, spacing_);
-	slice_roi.set_world_top_left(slice_world_tl);
-	slice_roi.set_world_bottom_right(slice_world_br);
-	slice_roi.set_pixel_top_left(slice_pixel_tl);
-	slice_roi.set_pixel_bottom_right(slice_pixel_br);
-	slice_roi.set_vtk_actor();
+	ROI* slice_roi = new ROI(view_name_, spacing_);
+	slice_roi->set_world_top_left(slice_world_tl);
+	slice_roi->set_world_bottom_right(slice_world_br);
+	slice_roi->set_pixel_top_left(slice_pixel_tl);
+	slice_roi->set_pixel_bottom_right(slice_pixel_br);
+	slice_roi->set_vtk_actor();
 	return slice_roi;
 }

@@ -174,6 +174,7 @@ void Viewer::set_clipping_range()
     clipping_range_ = new double[2];
     clipping_range_[0] = range - depth_space / 2;
     clipping_range_[1] = range + depth_space / 2;
+    //std::cout << "Slice " << image_viewer_->GetSlice() << " : " << clipping_range_[0] << " , " << clipping_range_[1] << std::endl;
 }
 
 void Viewer::RefreshViewer()
@@ -290,25 +291,28 @@ void Viewer::Zoom(const double rate)
 
 void Viewer::DrawROI()
 {
-    if (drawing_roi_ != nullptr)
-    {
-        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->vtk_actor());
-        delete[] drawing_roi_;
-        drawing_roi_ = nullptr;
-    }
-
     double* start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_;
     double* curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_;
     int* pixel_start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_pixel_pos_;
     int* pixel_curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_;
     if (Distance(pixel_start, pixel_curr) <= 5.0) return;
-
-    drawing_roi_ = new ROI(view_name_, spacing_);
-    drawing_roi_->set_world_top_left(start);
-    drawing_roi_->set_world_bottom_right(curr);
-    drawing_roi_->set_pixel_top_left(pixel_start);
-    drawing_roi_->set_pixel_bottom_right(pixel_curr);
+    if (drawing_roi_ == nullptr)
+    {
+        std::vector<double> vec_spacing{spacing_[0], spacing_[1], spacing_[2]};
+        drawing_roi_ = new ROI(view_name_, vec_spacing);
+    }
+    else
+    {
+        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->vtk_actor());
+    }
+    
+    drawing_roi_->set_world_top_left({start[0], start[1], start[2]});
+    drawing_roi_->set_world_bottom_right({curr[0], curr[1], curr[2]});
+    drawing_roi_->set_pixel_top_left({pixel_start[0], pixel_start[1], pixel_start[2]});
+    drawing_roi_->set_pixel_bottom_right({pixel_curr[0], pixel_curr[1], pixel_curr[2]});
     drawing_roi_->set_vtk_actor();
     image_viewer_->GetRenderer()->AddActor(drawing_roi_->vtk_actor());
+    //std::cout << "\nDraw z pos : " << start[2] <<std::endl;
+    //std::cout << "Spacing z : " << spacing_[2] << std::endl;
     this->RefreshViewer();
 }

@@ -111,9 +111,11 @@ void ImageViewer1::AddNodule()
     double* spacing = const_cast<double*>(viewer_map_[control_view]->spacing());
     int* dimension = const_cast<int*>(viewer_map_[control_view]->dimension());
     ROI* roi = viewer_map_[control_view]->roi();
-
+    
     // Create Nodule
-    Nodule* nodule = new Nodule(control_view, spacing, dimension);
+    std::vector<double> vec_spacing{spacing[0], spacing[1], spacing[2]};
+    std::vector<int> vec_dimension{dimension[0], dimension[1], dimension[2]};
+    Nodule* nodule = new Nodule(control_view, vec_spacing, vec_dimension);
     nodule->set_roi(*roi);
 
     // Segment Nodule
@@ -165,7 +167,7 @@ void ImageViewer1::SegmentNodule(Nodule* nodule)
     std::cout << "Start slice : " << start_slice << std::endl;
     std::cout << "End slice   : " << end_slice << std::endl;
 
-    // 將VTK的Actor放到image_viewer上
+    // put vtk's actor to image_viewer_
     vtkSmartPointer<vtkActor> roi;
     std::vector<vtkSmartPointer<vtkActor>> contours;
     for (int i = start_slice; i <= end_slice; ++i)
