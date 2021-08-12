@@ -35,13 +35,14 @@ public:
     void                                DragSlice();
     void                                Zoom(const double rate);
     void                                DrawROI();
-    
+    void                                RefreshViewer();
     //-------------------------------------------------------------------------------------------//
 
     ViewName                            view_name() const { return view_name_; }
     vtkSmartPointer<vtkImageData>       image_data() const { return image_data_; }
+    vtkSmartPointer<vtkImageViewer2>    image_viewer() const { return image_viewer_; }
     vtkSmartPointer<ViewerInteractor>   image_interactor() const { return image_interactor_; }
-    ROI*                                get_roi() const { return drawing_roi_; }
+    ROI*                                roi() const { return drawing_roi_; }
 
     void                                set_spacing(const double spacing[3]) { std::memcpy(spacing_, spacing, sizeof(double) * 3); }
     const double*                       spacing() const { return spacing_; }
@@ -68,7 +69,6 @@ public:
 
 private:
     void                                FillView();
-    void                                RefreshViewer();
     void                                InitVTKWidget(const DcmDataSet& data_set);
     vtkSmartPointer<vtkImageData>       InitVTKImageData(const DcmDataSet& data_set);
 
@@ -95,5 +95,12 @@ private:
     double*                                         clipping_range_ = nullptr;
 
 };
+
+template<typename T>
+double Distance(T* p1, T* p2) 
+{
+    return std::sqrt((std::pow((p1[0] - p2[0]), 2)) + (std::pow((p1[1] - p2[1]), 2)));
+}
+
 
 #endif // VIEWER_H

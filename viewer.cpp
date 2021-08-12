@@ -187,6 +187,7 @@ void Viewer::MoveSlicePlus()
 {
     int new_slice = image_viewer_->GetSlice() + 1;
     image_viewer_->SetSlice(new_slice);
+    global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = new_slice;
     this->RefreshViewer();
 }
 
@@ -194,6 +195,7 @@ void Viewer::MoveSliceMinus()
 {
     int new_slice = image_viewer_->GetSlice() - 1;
     image_viewer_->SetSlice(new_slice);
+    global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = new_slice;
     this->RefreshViewer();
 }
 
@@ -207,6 +209,8 @@ void Viewer::DragSlice()
 
         global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[1] =
            global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[1];
+
+        global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = image_viewer_->GetSlice();
     }
     else if (view_name_ == ViewName::COR)
     {
@@ -216,6 +220,8 @@ void Viewer::DragSlice()
 
         global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[2] =
             global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[2];
+
+        global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = image_viewer_->GetSlice();
     }
     else if (view_name_ == ViewName::SAG)
     {
@@ -225,6 +231,8 @@ void Viewer::DragSlice()
 
         global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] =
             global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0];
+
+        global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = image_viewer_->GetSlice();
     }
     this->RefreshViewer();
 }
@@ -284,19 +292,23 @@ void Viewer::DrawROI()
 {
     if (drawing_roi_ != nullptr)
     {
-        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->get_vtk_actor());
-        //delete drawing_roi_;
+        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->vtk_actor());
+        delete[] drawing_roi_;
+        drawing_roi_ = nullptr;
     }
 
     double* start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_;
     double* curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_;
     int* pixel_start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_pixel_pos_;
     int* pixel_curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_;
+    if (Distance(pixel_start, pixel_curr) <= 5.0) return;
 
-    drawing_roi_ = new ROI(spacing_, start, curr);
+    drawing_roi_ = new ROI(view_name_, spacing_);
+    drawing_roi_->set_world_top_left(start);
+    drawing_roi_->set_world_bottom_right(curr);
     drawing_roi_->set_pixel_top_left(pixel_start);
     drawing_roi_->set_pixel_bottom_right(pixel_curr);
     drawing_roi_->set_vtk_actor();
-    image_viewer_->GetRenderer()->AddActor(drawing_roi_->get_vtk_actor());
+    image_viewer_->GetRenderer()->AddActor(drawing_roi_->vtk_actor());
     this->RefreshViewer();
 }

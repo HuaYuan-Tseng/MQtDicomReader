@@ -1,41 +1,40 @@
 #include "roi.h"
 
-ROI::ROI(double* spacing, double* world_top_left, double* world_bottom_right) :
-	spacing_(spacing),
-	world_top_left_(world_top_left),
-	world_bottom_right_(world_bottom_right)
+ROI::ROI(ViewName name, double* spacing) :
+	view_name_(name),
+	spacing_(spacing)
 {
 	roi_actor_ = vtkSmartPointer<vtkActor>::New();
 }
 
 ROI::ROI(const ROI& roi)
 {
-	this->set_vtk_actor(roi.get_vtk_actor());
+	this->set_vtk_actor(roi.vtk_actor());
 
-	double* src_spacing = roi.get_spacing();
+	double* src_spacing = roi.spacing();
 	spacing_ = new double[3];
 	std::copy(src_spacing, src_spacing + 3, spacing_);
 
-	double* src_top_left = roi.get_world_top_left();
+	double* src_top_left = roi.world_top_left();
 	world_top_left_ = new double[3];
 	std::copy(src_top_left, src_top_left + 3, world_top_left_);
 
-	double* src_bottom_right = roi.get_world_bottom_right();
+	double* src_bottom_right = roi.world_bottom_right();
 	world_bottom_right_ = new double[3];
 	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
 
-	int* src_pixel_top_left = roi.get_pixel_top_left();
+	int* src_pixel_top_left = roi.pixel_top_left();
 	pixel_top_left_ = new int[3];
 	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
 
-	int* src_pixel_bottom_right = roi.get_pixel_bottom_right();
+	int* src_pixel_bottom_right = roi.pixel_bottom_right();
 	pixel_bottom_right_ = new int[3];
 	std::copy(src_pixel_bottom_right, src_pixel_bottom_right + 3, pixel_bottom_right_);
 }
 
 ROI::~ROI()
 {
-	if (roi_actor_ != nullptr)				roi_actor_ = nullptr;
+	//roi_actor_ = nullptr;
 	if (spacing_ != nullptr)				delete[] spacing_;
 	if (world_top_left_ != nullptr)			delete[] world_top_left_;
 	if (world_bottom_right_ != nullptr)		delete[] world_bottom_right_;
@@ -45,9 +44,9 @@ ROI::~ROI()
 
 ROI& ROI::operator = (const ROI& roi)
 {
-	this->set_vtk_actor(roi.get_vtk_actor());
+	this->set_vtk_actor(roi.vtk_actor());
 
-	double* src_spacing = roi.get_spacing();
+	double* src_spacing = roi.spacing();
 	if (spacing_ != nullptr)
 	{
 		delete[] spacing_;
@@ -56,7 +55,7 @@ ROI& ROI::operator = (const ROI& roi)
 	spacing_ = new double[3];
 	std::copy(src_spacing, src_spacing + 3, spacing_);
 
-	double* src_top_left = roi.get_world_top_left();
+	double* src_top_left = roi.world_top_left();
 	if (world_top_left_ != nullptr)
 	{
 		delete[] world_top_left_;
@@ -65,7 +64,7 @@ ROI& ROI::operator = (const ROI& roi)
 	world_top_left_ = new double[3];
 	std::copy(src_top_left, src_top_left + 3, world_top_left_);
 
-	double* src_bottom_right = roi.get_world_bottom_right();
+	double* src_bottom_right = roi.world_bottom_right();
 	if (world_bottom_right_ != nullptr)
 	{
 		delete[] world_bottom_right_;
@@ -74,7 +73,7 @@ ROI& ROI::operator = (const ROI& roi)
 	world_bottom_right_ = new double[3];
 	std::copy(src_bottom_right, src_bottom_right + 3, world_bottom_right_);
 
-	int* src_pixel_top_left = roi.get_pixel_top_left();
+	int* src_pixel_top_left = roi.pixel_top_left();
 	if (pixel_top_left_ != nullptr)
 	{
 		delete[] pixel_top_left_;
@@ -83,7 +82,7 @@ ROI& ROI::operator = (const ROI& roi)
 	pixel_top_left_ = new int[3];
 	std::copy(src_pixel_top_left, src_pixel_top_left + 3, pixel_top_left_);
 
-	int* src_pixel_bottom_right = roi.get_pixel_bottom_right();
+	int* src_pixel_bottom_right = roi.pixel_bottom_right();
 	if (pixel_bottom_right_ != nullptr)
 	{
 		delete[] pixel_bottom_right_;
@@ -97,6 +96,7 @@ ROI& ROI::operator = (const ROI& roi)
 
 void ROI::set_vtk_actor()
 {
+	if (world_top_left_ == nullptr || world_bottom_right_ == nullptr) return;
 	this->ConstructROIActor();
 }
 

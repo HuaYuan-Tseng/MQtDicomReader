@@ -5,37 +5,43 @@
 #include <vtkActor.h>
 #include <vtkProperty.h>
 
+#include "globalstate.h"
+
 class ROI {
 public:
-	explicit	ROI(double* spacing, double* world_top_left, double* world_bottom_right);
-				~ROI();
+				
+				ROI() = default;
 				ROI(const ROI& roi);
+	explicit	ROI(ViewName name, double* spacing);
+				~ROI();
+				
 
 	ROI&		operator = (const ROI& roi);
 
 	//---------------------------------------------------------------------//
 	void						set_vtk_actor();
 	void						set_vtk_actor(vtkSmartPointer<vtkActor> actor) { roi_actor_ = actor; }
-	vtkSmartPointer<vtkActor>	get_vtk_actor() const { return roi_actor_; }
+	vtkSmartPointer<vtkActor>	vtk_actor() const { return roi_actor_; }
 
 	void						set_spacing(double* spacing) { spacing_ = spacing; }
-	double*						get_spacing() const { return spacing_; }
+	double*						spacing() const { return spacing_; }
 
 	void						set_world_top_left(double* position) { world_top_left_ = position; }
-	double*						get_world_top_left() const { return world_top_left_; }
+	double*						world_top_left() const { return world_top_left_; }
 
 	void						set_world_bottom_right(double* position) { world_bottom_right_ = position; }
-	double*						get_world_bottom_right() const { return world_bottom_right_; }
+	double*						world_bottom_right() const { return world_bottom_right_; }
 
 	void						set_pixel_top_left(int* position) { pixel_top_left_ = position; }
-	int*						get_pixel_top_left() const { return pixel_top_left_; }
+	int*						pixel_top_left() const { return pixel_top_left_; }
 
 	void						set_pixel_bottom_right(int* position) { pixel_bottom_right_ = position; }
-	int*						get_pixel_bottom_right() const { return pixel_bottom_right_; }
+	int*						pixel_bottom_right() const { return pixel_bottom_right_; }
 
 private:
 	void						ConstructROIActor();
 
+	ViewName					view_name_ = ViewName::TRA;
 	vtkSmartPointer<vtkActor>	roi_actor_ = nullptr;
 
 	double*						spacing_ = nullptr;

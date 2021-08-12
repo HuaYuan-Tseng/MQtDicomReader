@@ -129,7 +129,7 @@ void ViewerInteractor::OnLeftButtonUp()
     // Label Nodule
     if (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE)
     {
-        event_map_[Event::ADD_NODULE]();
+        //event_map_[Event::ADD_NODULE]();
     }
 }
 
