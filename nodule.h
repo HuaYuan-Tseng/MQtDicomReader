@@ -31,15 +31,15 @@ public:
 
 	int						contour_end_slice() const { return contour_end_slice_; }
 
-	const std::vector<int>& roi_tl() const { return roi_list_.at(label_init_slice())->pixel_top_left(); }
+	const std::vector<int>& roi_tl() const { return roi_list_.at(label_init_slice()).pixel_top_left(); }
 
-    const std::vector<int>& roi_br() const { return roi_list_.at(label_init_slice())->pixel_bottom_right(); }
+    const std::vector<int>& roi_br() const { return roi_list_.at(label_init_slice()).pixel_bottom_right(); }
 
 	bool					IsSliceHaveContour(int slice) { return contour_list_.find(slice) != contour_list_.end(); }
 
 private:
 	VTKContour				ConstructContourVTKActor(int slice, const Contour& contour);
-	ROI*                    ConstructROIVTKActor(int slice);
+	ROI                    ConstructROIVTKActor(int slice);
 	void					CheckStartEndSlice();
 
 private:
@@ -51,7 +51,7 @@ private:
 	int											contour_start_slice_ = 0;
 	int											contour_end_slice_ = 0;
 
-	std::map<int, ROI*>							roi_list_;
+	std::map<int, ROI>							roi_list_;
 	std::map<int, Contour>						contour_list_;
 	std::map<int, VTKContour>					vtk_contour_list_;
 

@@ -60,6 +60,12 @@ ROI& ROI::operator = (const ROI& roi)
     pixel_top_left_.assign(roi.pixel_top_left().begin(), roi.pixel_top_left().end());
     pixel_bottom_right_.assign(roi.pixel_bottom_right().begin(), roi.pixel_bottom_right().end());
     
+    std::cout << "spacing size : " << spacing_.size() << std::endl;
+    std::cout << "World tl size : " << world_top_left_.size() << std::endl;
+    std::cout << "World br size : " << world_bottom_right_.size() << std::endl;
+    std::cout << "Pixel tl size : " << pixel_top_left_.size() << std::endl;
+    std::cout << "Pixel br size : " << pixel_bottom_right_.size() << std::endl;
+    
     this->ConstructROIActor();
     
 	return *this;

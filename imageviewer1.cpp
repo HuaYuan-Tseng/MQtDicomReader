@@ -110,13 +110,19 @@ void ImageViewer1::AddNodule()
     ViewName control_view = global_state_->image_viewer_1_.current_control_view_;
     double* spacing = const_cast<double*>(viewer_map_[control_view]->spacing());
     int* dimension = const_cast<int*>(viewer_map_[control_view]->dimension());
+    std::cout << "Spacing : " << spacing[0] << " , " << spacing[1] << " , " << spacing[2] << std::endl;
+    std::cout << "Dimension : " << dimension[0] << " , " << dimension[1] << " , " << dimension[2] << std::endl;
+    
     ROI* roi = viewer_map_[control_view]->roi();
+    if (roi == nullptr) std::cout << "ROI is nullptr" << std::endl;
+    else std::cout << "Get roi" << std::endl;
     
     // Create Nodule
     std::vector<double> vec_spacing{spacing[0], spacing[1], spacing[2]};
     std::vector<int> vec_dimension{dimension[0], dimension[1], dimension[2]};
     Nodule* nodule = new Nodule(control_view, vec_spacing, vec_dimension);
     nodule->set_roi(*roi);
+    std::cout << "Init nodule." << std::endl;
 
     // Segment Nodule
     this->SegmentNodule(nodule);
