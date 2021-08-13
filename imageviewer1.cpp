@@ -738,7 +738,7 @@ void ImageViewer1::ToLungSegment()
 
 CVTest cv_proc_src;
 CVTest cv_proc_hu_bin;
-CVTest cv_proc_lung_bin;
+CVTest cv_proc_remove_border;
 CVTest cv_proc_lung_mask;
 CVTest cv_proc_lung_area;
 
@@ -753,6 +753,7 @@ void ImageViewer1::ToProcess()
     int rows = data_set.rows();
     int cols = data_set.cols();
     
+    // 1. Take source image.
     cv_proc_src.set_property(rows, cols, total_slice, "Src");
     for (int i = 0; i < total_slice; ++i)
     {
@@ -761,62 +762,96 @@ void ImageViewer1::ToProcess()
     }
     cv_proc_src.Display();
     
+    // 2. Threshold Image (-400)
     cv_proc_hu_bin.set_property(rows, cols, total_slice, "HU bin");
     for (int i = 0; i < total_slice; ++i)
     {
         cv::Mat hu_bin = ThresholdVTKImage(viewer_map_[ViewName::TRA]->image_data(), i, -400, true);
         cv_proc_hu_bin.set_image(hu_bin, i);
     }
-    //cv_proc_hu_bin.display();
+    cv_proc_hu_bin.Display();
     
-    cv_proc_lung_bin.set_property(rows, cols, total_slice, "Lung Bin");
+    // 3 - 1. Remove the area that attached to image border.
+    // 3 - 2. Keep the labels with 3 largest areas.
+    cv_proc_remove_border.set_property(rows, cols, total_slice, "Remove Border");
     for (int i = 0; i < total_slice; ++i)
     {
         cv::Mat hu_bin = cv_proc_hu_bin.get_image(i);
         
-        cv::Mat label;
-        cv::Mat stats;
-        cv::Mat centroids;
-        cv::connectedComponentsWithStats(hu_bin, label, stats, centroids);
-        
+        // Label image
+        int label_cnt = 0;
+        cv::Mat label, stats, centroids;
+        label_cnt = cv::connectedComponentsWithStats(hu_bin, label, stats, centroids);
+
+        // Sorting label's area (except background)
+        // Usually, the background is "the area around the lung (spine. ribs. etc.)".
+        // Because openCV will determine the "black area of bin image" is "background".
         int row = hu_bin.rows;
         int col = hu_bin.cols;
-        cv::Mat res(row, col, CV_8UC1, cv::Scalar::all(255));
+        int label_1 = label.at<int>(1, 1);
+        int label_2 = label.at<int>(row - 1, col - 1);
+        std::vector<int> area(label_cnt);
+        for (int i = 1; i < label_cnt; ++i)
+        {
+            if (i == label_1 || i == label_2)
+                area[i] = 0;
+            else
+                area[i] = stats.at<int>(i, cv::CC_STAT_AREA);
+        }
+        std::sort(area.begin(), area.end(), std::greater<int>());
+
+        std::vector<uchar> color(label_cnt);
+        color[0] = 0;
+        for (int i = 1; i < label_cnt; ++i)
+        {
+            if (stats.at<int>(i, cv::CC_STAT_LEFT) <= 0 ||
+                stats.at<int>(i, cv::CC_STAT_TOP) <= 0 ||
+                stats.at<int>(i, cv::CC_STAT_LEFT) + stats.at<int>(i, cv::CC_STAT_WIDTH) >= col - 1 ||
+                stats.at<int>(i, cv::CC_STAT_TOP) + stats.at<int>(i, cv::CC_STAT_HEIGHT) >= row - 1)
+                color.at(i) = 0;
+            else if (i == label_1 || i == label_2)
+                color.at(i) = 0;
+            else if (label_cnt > 3 && stats.at<int>(i, cv::CC_STAT_AREA) < area.at(2))
+                color.at(i) = 0;
+            else
+                color.at(i) = 255;
+        }
+        
+        cv::Mat res(row, col, CV_8UC1);
         for (int i = 0; i < row; ++i)
         {
             uchar* res_ptr = res.ptr<uchar>(i);
-            int* label_ptr = label.ptr<int>(i);
             for (int j = 0; j < col; ++j)
             {
-                int n = label_ptr[j];
-                
-                if (stats.at<int>(n, cv::CC_STAT_LEFT) <= 0 ||
-                    stats.at<int>(n, cv::CC_STAT_TOP) <= 0 ||
-                    stats.at<int>(n, cv::CC_STAT_LEFT) + stats.at<int>(n, cv::CC_STAT_WIDTH) >= col - 1 ||
-                    stats.at<int>(n, cv::CC_STAT_TOP) + stats.at<int>(n, cv::CC_STAT_HEIGHT) >= row - 1 )
-                    res_ptr[j] = 0;
+                int n = label.at<int>(i, j);
+                res_ptr[j] = color[n];
             }
         }
         
-        cv_proc_lung_bin.set_image(res, i);
+        cv_proc_remove_border.set_image(res, i);
     }
-    cv_proc_lung_bin.Display();
+    cv_proc_remove_border.Display();
     
     cv_proc_lung_mask.set_property(rows, cols, total_slice, "Lung Mask");
     for (int i = 0; i < total_slice; ++i)
     {
-        cv::Mat lung_bin = cv_proc_hu_bin.get_image(i);      
-        cv::Mat lung_close, outline, blackhat;
-        cv::Mat elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-        cv::morphologyEx(lung_bin, lung_close, cv::MORPH_CLOSE, elem, cv::Point(-1, -1), 1);
-        cv::morphologyEx(lung_close, outline, cv::MORPH_GRADIENT, elem, cv::Point(-1, -1), 1);
+        cv::Mat bin = cv_proc_remove_border.get_image(i);
 
-        cv::Mat black = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9));
-        cv::morphologyEx(outline, blackhat, cv::MORPH_BLACKHAT, black, cv::Point(-1, -1), 2);
-        outline += blackhat;
+        cv::Mat close_bin, close_elem;
+        close_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(21, 21));
+        cv::morphologyEx(bin, close_bin, cv::MORPH_CLOSE, close_elem, cv::Point(-1, -1), 1);
 
-        cv::Mat res;
-        cv::bitwise_or(lung_close, outline, res);
+        cv::Mat black_bin, black_elem;
+        black_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(21, 21));
+        cv::morphologyEx(close_bin, black_bin, cv::MORPH_BLACKHAT, black_elem, cv::Point(-1, -1), 1);
+
+        cv::Mat mask;
+        cv::bitwise_or(close_bin, black_bin, mask);
+
+        cv::Mat res(bin.rows, bin.cols, CV_8UC1, cv::Scalar(0));
+        std::vector<std::vector<cv::Point>> contour;
+        cv::findContours(mask, contour, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+        cv::drawContours(res, contour, -1, cv::Scalar(255), -1, 8);
         
         cv_proc_lung_mask.set_image(res, i);
     }
@@ -849,7 +884,7 @@ void ImageViewer1::ToProcess()
             cv::destroyAllWindows();
             cv_proc_src.ClearAll();
             cv_proc_hu_bin.ClearAll();
-            cv_proc_lung_bin.ClearAll();
+            cv_proc_remove_border.ClearAll();
             cv_proc_lung_mask.ClearAll();
             cv_proc_lung_area.ClearAll();
             break;
