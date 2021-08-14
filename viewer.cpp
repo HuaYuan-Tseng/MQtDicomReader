@@ -10,13 +10,30 @@ Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget, GlobalState* state)
 
 Viewer::~Viewer()
 {
+    if (image_data_ != nullptr)
+    {
+        image_data_->ReleaseData();
+        image_data_ = nullptr;
+    }
+    if (image_render_ != nullptr)  
+    {
+        image_render_->ReleaseGraphicsResources(render_window_);
+        image_render_ = nullptr;
+    }
+    if (image_viewer_ != nullptr)       
+    {
+        image_viewer_->RemoveAllObservers();
+        image_viewer_ = nullptr;
+    }
+    if (image_interactor_ != nullptr)  
+    {
+        image_interactor_->RemoveAllObservers();
+        image_interactor_ = nullptr;
+    }
+    
     widget_ = nullptr;
     global_state_ = nullptr;
-
-    if (image_data_ != nullptr)         image_data_->ReleaseData();
-    if (image_render_ != nullptr)       image_render_->ReleaseGraphicsResources(render_window_);
-    if (image_viewer_ != nullptr)       image_viewer_->RemoveAllObservers();
-    if (image_interactor_ != nullptr)   image_interactor_->RemoveAllObservers();
+    render_window_ = nullptr;
 }
 
 void Viewer::Init(const DcmDataSet& data_set)
@@ -49,17 +66,16 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_data_ = vtkSmartPointer<vtkImageData>::New();
     image_data_ = InitVTKImageData(data_set);
     
-    render_window_ = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    
     image_viewer_ = vtkSmartPointer<vtkImageViewer2>::New();
     image_viewer_->SetInputData(image_data_);
-    image_viewer_->SetRenderWindow(render_window_);
+    image_viewer_->SetRenderWindow(widget_->GetRenderWindow());
     image_viewer_->Modified();
     
     image_render_ = image_viewer_->GetRenderer();
     image_render_->ResetCamera();
     image_render_->SetBackground(0.0, 0.0, 0.0);
     image_render_->GetActiveCamera()->ParallelProjectionOn();
+    image_render_->Modified();
     
     image_interactor_ = vtkSmartPointer<ViewerInteractor>::New();
     image_interactor_->SetCurrentRenderer(image_render_);
@@ -69,9 +85,8 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_interactor_->set_view_name(view_name_);
     image_interactor_->Modified();
     
-    widget_->SetRenderWindow(render_window_);
     widget_->GetInteractor()->SetInteractorStyle(image_interactor_);
-    widget_->GetInteractor()->SetRenderWindow(render_window_);
+    widget_->GetInteractor()->SetRenderWindow(image_viewer_->GetRenderWindow());
     widget_->update();
     
     image_viewer_->Render();
@@ -170,7 +185,11 @@ void Viewer::set_clipping_range()
     if (view_name_ == ViewName::TRA)        depth_space = spacing_[2];
     else if (view_name_ == ViewName::COR)   depth_space = spacing_[1];
     else if (view_name_ == ViewName::SAG)   depth_space = spacing_[0];
-    if (clipping_range_ != nullptr) delete[] clipping_range_;
+    if (clipping_range_ != nullptr) 
+    {
+        delete[] clipping_range_;
+        clipping_range_ = nullptr;
+    }
     clipping_range_ = new double[2];
     clipping_range_[0] = range - depth_space / 2;
     clipping_range_[1] = range + depth_space / 2;
@@ -312,7 +331,7 @@ void Viewer::DrawROI()
     drawing_roi_->set_pixel_bottom_right({pixel_curr[0], pixel_curr[1], pixel_curr[2]});
     drawing_roi_->set_vtk_actor();
     image_viewer_->GetRenderer()->AddActor(drawing_roi_->vtk_actor());
-    //std::cout << "\nDraw z pos : " << start[2] <<std::endl;
-    //std::cout << "Spacing z : " << spacing_[2] << std::endl;
+    std::cout << "\nDraw z pos : " << start[2] <<std::endl;
+    std::cout << "Spacing z : " << spacing_[2] << std::endl;
     this->RefreshViewer();
 }

@@ -33,18 +33,19 @@ ImageViewer1::~ImageViewer1()
 
 void ImageViewer1::SetupViewers()
 {
+    for (auto& viewer : viewer_map_)
+    {
+        if (viewer.second != nullptr)
+        {
+            delete viewer.second;
+            viewer.second = nullptr;
+        }
+    }
     InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
 }
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
-{
-    auto it = viewer_map_.find(view_name);
-    if (it != viewer_map_.end())
-    {
-        delete it->second;
-        viewer_map_.erase(view_name);
-    }
-    
+{    
     Viewer* viewer = new Viewer(view_name, widget, global_state_);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);
