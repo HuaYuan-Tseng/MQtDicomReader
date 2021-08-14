@@ -39,11 +39,6 @@ private:
     void                            ZoomOut();
     void                            DrawROI();
     void                            AddNodule();
-    void                            SegmentNodule(Nodule* nodule);
-    cv::Point                       DetectBestSeed(cv::Mat& roi);
-    cv::Point                       SliceSegment(Nodule* nod, cv::Mat& src, cv::Point& seed, double& pre_seed_pixel, int slice);
-    cv::Mat                         RegionGrowing(cv::Mat& src, cv::Point& seed, const int& new_val, const int& th);
-    cv::Mat                         LungMarker(int slice);
 
     void                            SaveOpenCVImage(const std::string name, const cv::Mat& src) const;
     cv::Mat                         ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const;
