@@ -34,21 +34,21 @@ public:
     void                                MoveSliceMinus();
     void                                DragSlice();
     void                                Zoom(const double rate);
-    void                                DrawROI();
+    void                                DrawROI(ROI* roi);
     void                                RefreshViewer();
+    
     //-------------------------------------------------------------------------------------------//
 
     ViewName                            view_name() const { return view_name_; }
     vtkSmartPointer<vtkImageData>       image_data() const { return image_data_; }
     vtkSmartPointer<vtkImageViewer2>    image_viewer() const { return image_viewer_; }
     vtkSmartPointer<ViewerInteractor>   image_interactor() const { return image_interactor_; }
-    ROI*                                roi() { return drawing_roi_; }
 
-    void                                set_spacing(const double spacing[3]) { std::memcpy(spacing_, spacing, sizeof(double) * 3); }
-    const double*                       spacing() const { return spacing_; }
+    void                                set_spacing(const double spacing[3]) { std::copy(&spacing[0], &spacing[3], std::back_inserter(spacing_)); }
+    const std::vector<double>&          spacing() const { return spacing_; }
     
-    void                                set_diemnsion(const int dimension[3]) { std::memcpy(dimension_, dimension, sizeof(int) * 3); }
-    const int*                          dimension() const { return dimension_; }
+    void                                set_diemnsion(const int dimension[3]) { std::copy(&dimension[0], &dimension[3], std::back_inserter(dimension_)); }
+    const std::vector<int>&             dimension() const { return dimension_; }
     
     void                                set_rescale_slope(const int slope) { rescale_slope_ = slope; }
     int                                 rescale_slope() const { return rescale_slope_; }
@@ -65,7 +65,7 @@ public:
     double                              get_zoom_rate() const;
 
     void                                set_clipping_range();
-    const double*                       clipping_range() const { return clipping_range_; }
+    const std::vector<double>&          clipping_range() const { return clipping_range_; }
 
 private:
     void                                FillView();
@@ -77,30 +77,21 @@ private:
     GlobalState*                                    global_state_ = nullptr;
     QVTKOpenGLWidget*                               widget_ = nullptr;
     vtkSmartPointer<vtkImageData>                   image_data_ = nullptr;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow>   render_window_ = nullptr;
+    //vtkSmartPointer<vtkGenericOpenGLRenderWindow>   render_window_ = nullptr;
     vtkSmartPointer<vtkImageViewer2>                image_viewer_ = nullptr;
     vtkSmartPointer<vtkRenderer>                    image_render_ = nullptr;
     vtkSmartPointer<ViewerInteractor>               image_interactor_ = nullptr;
 
-    ROI*                                            drawing_roi_ = nullptr;
-
-    double                                          spacing_[3] = { 0 };
-    int                                             dimension_[3] = { 0 };
+    std::vector<double>                             spacing_ = {};
+    std::vector<int>                                dimension_ = {};
     int                                             rescale_slope_ = 0;
     int                                             rescale_intercept_ = 0;
     int                                             window_width_ = 0;
     int                                             window_center_ = 0;
-
     double                                          zoom_rate_ = 0.0;
-    double*                                         clipping_range_ = nullptr;
+    std::vector<double>                             clipping_range_ = {};
 
+    vtkSmartPointer<vtkActor>                       drawing_roi_ = nullptr;
 };
-
-template<typename T>
-double Distance(T* p1, T* p2) 
-{
-    return std::sqrt((std::pow((p1[0] - p2[0]), 2)) + (std::pow((p1[1] - p2[1]), 2)));
-}
-
 
 #endif // VIEWER_H

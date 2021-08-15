@@ -29,6 +29,8 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
 ImageViewer1::~ImageViewer1()
 {
     delete ui_;
+    global_state_ = nullptr;
+    
 }
 
 void ImageViewer1::SetupViewers()
@@ -41,7 +43,21 @@ void ImageViewer1::SetupViewers()
             viewer.second = nullptr;
         }
     }
+    viewer_map_.clear();
+    for (auto& roi : roi_map_)
+    {
+        if (roi.second != nullptr)
+        {
+            delete roi.second;
+            roi.second = nullptr;
+        }
+    }
+    roi_map_.clear();
+    
     InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
+    
+    global_state_->image_viewer_1_.Refresh();
+    SwitchOperateMode();
 }
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
@@ -102,7 +118,26 @@ void ImageViewer1::ZoomOut()
 
 void ImageViewer1::DrawROI()
 {
-    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->DrawROI();
+    ViewName name = global_state_->image_viewer_1_.current_control_view_;
+    std::vector<double> spacing = viewer_map_[name]->spacing();
+    
+    if (roi_map_.find(name) == roi_map_.end())  roi_map_[name] = new ROI(name, spacing);
+    ROI* roi = roi_map_[name];
+    
+    if (name == ViewName::TRA)
+    {
+        roi->set_world_top_left(global_state_->image_viewer_1_.control_map_[name].start_mouse_world_pos_);
+        roi->set_world_bottom_right(global_state_->image_viewer_1_.control_map_[name].curr_mouse_world_pos_);
+        roi->set_pixel_top_left(global_state_->image_viewer_1_.control_map_[name].start_mouse_pixel_pos_);
+        roi->set_pixel_bottom_right(global_state_->image_viewer_1_.control_map_[name].curr_mouse_pixel_pos_);
+    }
+    else if (name == ViewName::COR)
+    {
+        
+    }
+    
+    roi->set_vtk_actor();
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->DrawROI(roi);
 }
 
 void ImageViewer1::AddNodule()

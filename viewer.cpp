@@ -17,8 +17,10 @@ Viewer::~Viewer()
     }
     if (image_render_ != nullptr)  
     {
-        image_render_->ReleaseGraphicsResources(render_window_);
+        //image_render_->ReleaseGraphicsResources(render_window_);
+        image_render_->ReleaseGraphicsResources(widget_->GetRenderWindow());
         image_render_ = nullptr;
+        //render_window_ = nullptr;
     }
     if (image_viewer_ != nullptr)       
     {
@@ -30,19 +32,37 @@ Viewer::~Viewer()
         image_interactor_->RemoveAllObservers();
         image_interactor_ = nullptr;
     }
+    if (!spacing_.empty())
+    {
+        spacing_.clear();
+        spacing_.shrink_to_fit();
+    }
+    if (!dimension_.empty())
+    {
+        dimension_.clear();
+        dimension_.shrink_to_fit();
+    }
+    if (!clipping_range_.empty())
+    {
+        clipping_range_.clear();
+        clipping_range_.shrink_to_fit();
+    }
     
     widget_ = nullptr;
     global_state_ = nullptr;
-    render_window_ = nullptr;
+    drawing_roi_ = nullptr;
+    
 }
 
 void Viewer::Init(const DcmDataSet& data_set)
 {
     double spacing[3];
     spacing[0] = data_set.spacing_x();
-    spacing[1] = data_set.spacing_y(); 
-    spacing[2] = (data_set.spacing_z() != 0.0) ? 
-                data_set.spacing_z() : data_set.spacing_between_slice();
+    spacing[1] = data_set.spacing_y();
+    spacing[2] = (data_set.slice_thickness() != 0.0) ? 
+                data_set.slice_thickness() : data_set.spacing_between_slice();
+    //spacing[2] = (data_set.spacing_z() != 0.0) ? 
+    //            data_set.spacing_z() : data_set.spacing_between_slice();
     this->set_spacing(spacing);
     
     int dimension[3];
@@ -185,15 +205,10 @@ void Viewer::set_clipping_range()
     if (view_name_ == ViewName::TRA)        depth_space = spacing_[2];
     else if (view_name_ == ViewName::COR)   depth_space = spacing_[1];
     else if (view_name_ == ViewName::SAG)   depth_space = spacing_[0];
-    if (clipping_range_ != nullptr) 
-    {
-        delete[] clipping_range_;
-        clipping_range_ = nullptr;
-    }
-    clipping_range_ = new double[2];
+    if (clipping_range_.empty()) clipping_range_.resize(2);
     clipping_range_[0] = range - depth_space / 2;
     clipping_range_[1] = range + depth_space / 2;
-    //std::cout << "Slice " << image_viewer_->GetSlice() << " : " << clipping_range_[0] << " , " << clipping_range_[1] << std::endl;
+    std::cout << "Clipping range : " << clipping_range_[0] << " , " << clipping_range_[1] << std::endl;
 }
 
 void Viewer::RefreshViewer()
@@ -305,33 +320,15 @@ void Viewer::FillView()
 void Viewer::Zoom(const double rate)
 {
     image_viewer_->GetRenderer()->GetActiveCamera()->Zoom(rate);
+    zoom_rate_ = this->get_zoom_rate();
     this->RefreshViewer();
 }
 
-void Viewer::DrawROI()
+void Viewer::DrawROI(ROI* roi)
 {
-    double* start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_;
-    double* curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_;
-    int* pixel_start = global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_pixel_pos_;
-    int* pixel_curr = global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_;
-    if (Distance(pixel_start, pixel_curr) <= 5.0) return;
-    if (drawing_roi_ == nullptr)
-    {
-        std::vector<double> vec_spacing{spacing_[0], spacing_[1], spacing_[2]};
-        drawing_roi_ = new ROI(view_name_, vec_spacing);
-    }
-    else
-    {
-        image_viewer_->GetRenderer()->RemoveActor(drawing_roi_->vtk_actor());
-    }
-    
-    drawing_roi_->set_world_top_left({start[0], start[1], start[2]});
-    drawing_roi_->set_world_bottom_right({curr[0], curr[1], curr[2]});
-    drawing_roi_->set_pixel_top_left({pixel_start[0], pixel_start[1], pixel_start[2]});
-    drawing_roi_->set_pixel_bottom_right({pixel_curr[0], pixel_curr[1], pixel_curr[2]});
-    drawing_roi_->set_vtk_actor();
-    image_viewer_->GetRenderer()->AddActor(drawing_roi_->vtk_actor());
-    std::cout << "\nDraw z pos : " << start[2] <<std::endl;
-    std::cout << "Spacing z : " << spacing_[2] << std::endl;
+    if (drawing_roi_ != nullptr) image_viewer_->GetRenderer()->RemoveActor(drawing_roi_);
+    drawing_roi_ = roi->vtk_actor();
+    image_viewer_->GetRenderer()->AddActor(drawing_roi_);
     this->RefreshViewer();
+    std::cout << "Roi pos : " << drawing_roi_->GetCenter()[0] << " , " << drawing_roi_->GetCenter()[1] << " , " << drawing_roi_->GetCenter()[2] << std::endl;
 }

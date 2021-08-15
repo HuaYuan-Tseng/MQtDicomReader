@@ -60,12 +60,6 @@ ROI& ROI::operator = (const ROI& roi)
     pixel_top_left_.assign(roi.pixel_top_left().begin(), roi.pixel_top_left().end());
     pixel_bottom_right_.assign(roi.pixel_bottom_right().begin(), roi.pixel_bottom_right().end());
     
-    std::cout << "spacing size : " << spacing_.size() << std::endl;
-    std::cout << "World tl size : " << world_top_left_.size() << std::endl;
-    std::cout << "World br size : " << world_bottom_right_.size() << std::endl;
-    std::cout << "Pixel tl size : " << pixel_top_left_.size() << std::endl;
-    std::cout << "Pixel br size : " << pixel_bottom_right_.size() << std::endl;
-    
     this->ConstructROIActor();
     
 	return *this;
@@ -84,13 +78,13 @@ void ROI::ConstructROIActor()
 	// Vertex Order
 	// 0 3
 	// 1 2 
-	double draw_z_pos = world_top_left_[2];
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-	points->InsertNextPoint(world_top_left_[0], world_top_left_[1], draw_z_pos);
-	points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], draw_z_pos);
-	points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], draw_z_pos);
-	points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], draw_z_pos);
-
+    double world_z_pos = world_top_left_[2];
+    points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_z_pos);
+    points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_z_pos);
+    points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_z_pos);
+    points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_z_pos);
+	
 	vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
 	for (int i = 0; i < 4; ++i)
 	{

@@ -41,6 +41,9 @@ void ViewerInteractor::OnMouseMove()
     global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_[0] = image_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_[1] = image_pos[1];
     global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_pixel_pos_[2] = image_pos[2];
+    
+    std::cout << "\nWorld pos : " << world_pos[0] << " , " << world_pos[1] << " , " << world_pos[2] << std::endl;
+    std::cout << "Pixel pos : " << image_pos[0] << " , " << image_pos[1] << " , " << image_pos[2] << std::endl;
 
     if (global_state_->image_viewer_1_.is_draging_left_)
     {
@@ -177,6 +180,7 @@ void ViewerInteractor::OnRightButtonUp()
 
 void ViewerInteractor::OnKeyDown()
 {
+    ConfirmCurrentControlView();
     vtkRenderWindowInteractor* rwi = this->Interactor;
     std::string key = rwi->GetKeySym();
     
@@ -196,6 +200,7 @@ void ViewerInteractor::OnKeyDown()
 
 void ViewerInteractor::OnKeyUp()
 {
+    ConfirmCurrentControlView();
     vtkRenderWindowInteractor* rwi = this->Interactor;
     std::string key = rwi->GetKeySym();
 

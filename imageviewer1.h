@@ -9,6 +9,7 @@
 #include "globalstate.h"
 #include "viewer.h"
 #include "nodule.h"
+#include "roi.h"
 
 namespace Ui {
 class ImageViewer1;
@@ -48,9 +49,17 @@ private:
 private:
     Ui::ImageViewer1*               ui_;
     GlobalState*                    global_state_;
-
     std::map<ViewName, Viewer*>     viewer_map_;
+
+    std::map<ViewName, ROI*>        roi_map_;
+    
     std::vector<Nodule*>            nodule_list_;
 };
+
+template<typename T>
+double Distance(T* p1, T* p2) 
+{
+    return std::sqrt((std::pow((p1[0] - p2[0]), 2)) + (std::pow((p1[1] - p2[1]), 2)));
+}
 
 #endif // IMAGEVIEWER1_H
