@@ -17,10 +17,14 @@ Viewer::~Viewer()
     }
     if (image_render_ != nullptr)  
     {
-        //image_render_->ReleaseGraphicsResources(render_window_);
+#ifdef Q_OS_MAC
         image_render_->ReleaseGraphicsResources(widget_->GetRenderWindow());
         image_render_ = nullptr;
-        //render_window_ = nullptr;
+#endif
+#ifdef Q_OS_WIN
+        image_render_->ReleaseGraphicsResources(render_window_);
+        render_window_ = nullptr;
+#endif
     }
     if (image_viewer_ != nullptr)       
     {
@@ -51,7 +55,7 @@ Viewer::~Viewer()
     widget_ = nullptr;
     global_state_ = nullptr;
     drawing_roi_ = nullptr;
-    
+
 }
 
 void Viewer::Init(const DcmDataSet& data_set)
@@ -85,10 +89,19 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     if (image_data_ != nullptr) image_data_->ReleaseData();
     image_data_ = vtkSmartPointer<vtkImageData>::New();
     image_data_ = InitVTKImageData(data_set);
-    
+
+#ifdef Q_OS_WIN
+    render_window_ = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+#endif
+
     image_viewer_ = vtkSmartPointer<vtkImageViewer2>::New();
     image_viewer_->SetInputData(image_data_);
+#ifdef Q_OS_MAC
     image_viewer_->SetRenderWindow(widget_->GetRenderWindow());
+#endif
+#ifdef Q_OS_WIN
+    image_viewer_->SetRenderWindow(render_window_);
+#endif
     image_viewer_->Modified();
     
     image_render_ = image_viewer_->GetRenderer();
@@ -104,9 +117,15 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_interactor_->set_global_state(global_state_);
     image_interactor_->set_view_name(view_name_);
     image_interactor_->Modified();
-    
-    widget_->GetInteractor()->SetInteractorStyle(image_interactor_);
+ 
+#ifdef Q_OS_MAC
     widget_->GetInteractor()->SetRenderWindow(image_viewer_->GetRenderWindow());
+#endif
+#ifdef Q_OS_WIN
+    widget_->SetRenderWindow(render_window_);
+    widget_->GetInteractor()->SetRenderWindow(render_window_);
+#endif
+    widget_->GetInteractor()->SetInteractorStyle(image_interactor_);
     widget_->update();
     
     image_viewer_->Render();
@@ -208,7 +227,7 @@ void Viewer::set_clipping_range()
     if (clipping_range_.empty()) clipping_range_.resize(2);
     clipping_range_[0] = range - depth_space / 2;
     clipping_range_[1] = range + depth_space / 2;
-    std::cout << "Clipping range : " << clipping_range_[0] << " , " << clipping_range_[1] << std::endl;
+    //std::cout << "Clipping range : " << clipping_range_[0] << " , " << clipping_range_[1] << std::endl;
 }
 
 void Viewer::RefreshViewer()
@@ -330,5 +349,5 @@ void Viewer::DrawROI(ROI* roi)
     drawing_roi_ = roi->vtk_actor();
     image_viewer_->GetRenderer()->AddActor(drawing_roi_);
     this->RefreshViewer();
-    std::cout << "Roi pos : " << drawing_roi_->GetCenter()[0] << " , " << drawing_roi_->GetCenter()[1] << " , " << drawing_roi_->GetCenter()[2] << std::endl;
+    //std::cout << "Roi pos : " << drawing_roi_->GetCenter()[0] << " , " << drawing_roi_->GetCenter()[1] << " , " << drawing_roi_->GetCenter()[2] << std::endl;
 }

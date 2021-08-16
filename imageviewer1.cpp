@@ -124,14 +124,14 @@ void ImageViewer1::DrawROI()
     if (roi_map_.find(name) == roi_map_.end())  roi_map_[name] = new ROI(name, spacing);
     ROI* roi = roi_map_[name];
     
-    if (name == ViewName::TRA)
+    //if (name == ViewName::TRA)
     {
         roi->set_world_top_left(global_state_->image_viewer_1_.control_map_[name].start_mouse_world_pos_);
         roi->set_world_bottom_right(global_state_->image_viewer_1_.control_map_[name].curr_mouse_world_pos_);
         roi->set_pixel_top_left(global_state_->image_viewer_1_.control_map_[name].start_mouse_pixel_pos_);
         roi->set_pixel_bottom_right(global_state_->image_viewer_1_.control_map_[name].curr_mouse_pixel_pos_);
     }
-    else if (name == ViewName::COR)
+    //else if (name == ViewName::COR)
     {
         
     }

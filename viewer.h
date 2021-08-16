@@ -77,7 +77,7 @@ private:
     GlobalState*                                    global_state_ = nullptr;
     QVTKOpenGLWidget*                               widget_ = nullptr;
     vtkSmartPointer<vtkImageData>                   image_data_ = nullptr;
-    //vtkSmartPointer<vtkGenericOpenGLRenderWindow>   render_window_ = nullptr;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow>   render_window_ = nullptr;
     vtkSmartPointer<vtkImageViewer2>                image_viewer_ = nullptr;
     vtkSmartPointer<vtkRenderer>                    image_render_ = nullptr;
     vtkSmartPointer<ViewerInteractor>               image_interactor_ = nullptr;
