@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1417</width>
-    <height>880</height>
+    <height>881</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,6 +99,26 @@
    </property>
    <property name="autoExclusive">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="imageButton_NoduleSegment">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>180</y>
+     <width>131</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>11</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Nodule Segment</string>
    </property>
   </widget>
  </widget>

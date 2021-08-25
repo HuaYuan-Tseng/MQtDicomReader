@@ -17,6 +17,7 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     
     QObject::connect(ui_->imageButton_Process, SIGNAL(clicked()), this, SLOT(ToProcess()));
     QObject::connect(ui_->imageButton_LungSegment, SIGNAL(clicked()), this, SLOT(ToLungSegment()));
+    QObject::connect(ui_->imageButton_NoduleSegment, SIGNAL(clicked()), this, SLOT(ToNoduleSegment()));
     QObject::connect(ui_->imageButton_label_mode, &QPushButton::clicked, [&]() {
         global_state_->image_viewer_1_.current_operate_mode_ =
             (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE) ?
@@ -231,7 +232,7 @@ cv::Mat ImageViewer1::ThresholdVTKImage(vtkImageData* img, int slice, int thresh
     return res;
 }
 
-void ImageViewer1::SaveOpenCVImage(const std::string name, const cv::Mat& src) const
+void ImageViewer1::SaveCVImage(const std::string name, const cv::Mat& src) const
 {
 	// Output to view the result
 	cv::imwrite("C:/Users/Rex/Desktop/" +
@@ -494,6 +495,8 @@ CVTest cv_proc_lung_area;
 
 void ImageViewer1::ToProcess()
 {
+    // Lung Area Segment (another version).
+    //
     clock_t start, end;
     start = clock();
     
@@ -642,4 +645,165 @@ void ImageViewer1::ToProcess()
     }
 }
 
+CVTest  cv_nod_src;
+CVTest  cv_nod_roi;
 
+void ImageViewer1::ToNoduleSegment()
+{
+    clock_t start, end;
+    start = clock();
+
+    auto& data_set = global_state_->study_browser_.dcm_data_set_;
+    data_set.TransformPixelData();
+    int rows = data_set.rows();
+    int cols = data_set.cols();
+
+    double          diameter = 5.04;
+    cv::Point3i     center(176, 286, 36);
+    int x_radius = std::ceil(diameter / data_set.spacing_x() / 2) * 2;
+    int y_radius = std::ceil(diameter / data_set.spacing_y() / 2) * 2;
+    int z_radius = std::ceil(diameter / data_set.spacing_z() / 2);
+    std::vector<int> x_range{ center.x - x_radius, center.x + x_radius };
+    std::vector<int> y_range{ center.y - y_radius, center.y + y_radius };
+    std::vector<int> z_range{ center.z - z_radius, center.z + z_radius };
+    cv::Rect roi_rect(cv::Point2i(x_range.at(0), y_range.at(0)), 
+                        cv::Point2i(x_range.at(1), y_range.at(1)));
+
+    // 1. Take source image.
+    std::map<int, cv::Mat> src_map;
+    for (int i = z_range.at(0) - 1; i <= z_range.at(1) + 1; ++i)
+    {
+        src_map[i] = cv::Mat(rows, cols, CV_8UC1, data_set.get_instance_pixel_data(i));
+        //SaveCVImage("Src - " + std::to_string(i), src_map[i]);
+    }
+
+    // 2. Take ROI.
+    std::map<int, cv::Mat> roi_map;
+    for (int i = z_range.at(0) - 1; i <= z_range.at(1) + 1; ++i)
+    {
+        roi_map[i] = src_map[i](roi_rect);
+        //SaveCVImage("ROI - " + std::to_string(i), roi_map[i]);
+    }
+
+    // 3. Background estimation (optic flow image).
+    std::map<int, cv::Mat> roi_bkg_map;
+    int mid_slice = (z_range.at(0) + z_range.at(1)) / 2;
+    for (int i = z_range.at(0); i <= z_range.at(1); ++i)
+    {
+        cv::Mat roi_ref;
+        if (i >= mid_slice) roi_ref = roi_map[z_range.at(0) - 1];
+        else                roi_ref = roi_map[z_range.at(1) + 1];
+        cv::Mat roi = roi_map[i];
+
+        cv::Mat flow;
+        cv::calcOpticalFlowFarneback(roi_ref, roi, flow, 0.5, 1, 3, 3, 5, 1.1, 0);
+        cv::Mat roi_bkg(roi.rows, roi.cols, CV_8UC1, cv::Scalar::all(0));
+        for (int row = 0; row < roi.rows; ++row)
+        {
+            uchar* bkg_ptr = roi_bkg.ptr <uchar>(row);
+            cv::Point2f* flow_ptr = flow.ptr<cv::Point2f>(row);
+            for (int col = 0; col < roi.cols; ++col)
+            {
+                cv::Point2f displace = flow_ptr[col];
+                cv::Point dest = cv::Point(col + cvRound(displace.x), row + cvRound(displace.y));
+                if (dest.x < 0 || dest.x >= roi.cols || dest.y < 0 || dest.y >= roi.rows)
+                    bkg_ptr[col] = roi_ref.at<uchar>(row, col);
+                else
+                    bkg_ptr[col] = roi_ref.at<uchar>(dest.y, dest.x);
+            }
+        }
+
+        roi_bkg_map[i] = roi_bkg;
+        //SaveCVImage("Bkg - " + std::to_string(i), roi_bkg_map[i]);
+    }
+
+    // 4. Background subtraction
+    std::map<int, cv::Mat> roi_sub_map;
+    for (int i = z_range.at(0); i <= z_range.at(1); ++i)
+    {
+        cv::Mat roi = roi_map[i];
+        cv::Mat roi_bkg = roi_bkg_map[i];
+        cv::Mat roi_sub(roi.rows, roi.cols, CV_8UC1, cv::Scalar::all(0));
+
+        for (int row = 0; row < roi.rows; ++row)
+        {
+            uchar* roi_ptr = roi.ptr<uchar>(row);
+            uchar* bkg_ptr = roi_bkg.ptr<uchar>(row);
+            uchar* sub_ptr = roi_sub.ptr<uchar>(row);
+            for (int col = 0; col < roi.cols; ++col)
+            {
+                int sub = roi_ptr[col] - bkg_ptr[col];
+                sub = (sub < 0) ? 0 : sub;
+                sub_ptr[col] = sub;
+            }
+        }
+        roi_sub_map[i] = roi_sub;
+        //SaveCVImage("Sub - " + std::to_string(i), roi_sub_map[i]);
+    }
+
+    // 5. Refinement (normalize. mean filter)
+    std::map<int, cv::Mat> roi_ref_map;
+    for (int i = z_range.at(0); i <= z_range.at(1); ++i)
+    {
+        cv::Mat roi_sub = roi_sub_map[i];
+        cv::Mat roi_norm;
+        cv::normalize(roi_sub, roi_norm, 1.0, 0.0, cv::NORM_INF, CV_32FC1);
+        cv::Mat roi_ref;
+        cv::blur(roi_norm, roi_ref, cv::Size(3, 3));
+        roi_ref_map[i] = roi_ref;
+    }
+
+    // 6. Nodule Mask (OTSU. Dilate. Close)
+    std::map<int, cv::Mat> nodule_mask_map;
+    for (int i = z_range.at(0); i <= z_range.at(1); ++i)
+    {
+        cv::Mat roi_ref = roi_ref_map[i];
+        cv::Mat roi_norm;
+        cv::normalize(roi_ref, roi_norm, 0, 255, cv::NORM_MINMAX, CV_8UC1);
+        cv::Mat roi_otsu;
+        cv::threshold(roi_norm, roi_otsu, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+        cv::Mat dilate_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::Mat roi_dilate;
+        cv::morphologyEx(roi_otsu, roi_dilate, cv::MORPH_DILATE, dilate_elem, cv::Point(-1, -1), 1);
+
+        cv::Mat close_elem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::Mat roi_close;
+        cv::morphologyEx(roi_dilate, roi_close, cv::MORPH_CLOSE, close_elem, cv::Point(-1, -1), 1);
+
+        nodule_mask_map[i] = roi_close;
+        //SaveCVImage("Nodule - " + std::to_string(i), nodule_mask_map[i]);
+    }
+
+    // Display
+    std::map<int, int> area_map;
+    for (int i = z_range.at(0); i <= z_range.at(1); ++i)
+    {
+        cv::Mat src = src_map[i];
+        cv::Mat nodule_mask = nodule_mask_map[i];
+
+        // Calculate area
+        int area = 0;
+        for (int row = 0; row < nodule_mask.rows; ++row)
+        {
+            uchar* mask_ptr = nodule_mask.ptr<uchar>(row);
+            for (int col = 0; col < nodule_mask.cols; ++col)
+            {
+                if (mask_ptr[col] == 255) area += 1;
+            }
+        }
+        std::cout << "Slice " << i << " : " << area << std::endl;
+        area_map[i] = area;
+
+        // Draw Contours
+        cv::Mat res;
+        src.copyTo(res);
+        cv::cvtColor(res, res, cv::COLOR_GRAY2RGB);
+        std::vector<std::vector<cv::Point>> contour_list;
+        cv::findContours(nodule_mask, contour_list, cv::RETR_CCOMP, cv::CHAIN_APPROX_NONE);
+        cv::drawContours(res, contour_list, -1, cv::Scalar(0, 0, 255), 1, 8, cv::noArray(), INT_MAX, roi_rect.tl());
+
+        SaveCVImage("Res - " + std::to_string(i), res);
+    }
+
+}
