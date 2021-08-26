@@ -42,6 +42,7 @@ private slots:
 
 signals:
     void                        StartToSetupImageViewer1();
+    void                        StartToClearImageViewer1();
     void                        SwitchToImageViewer1();
 
 public:

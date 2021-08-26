@@ -25,6 +25,7 @@ public:
 
 public slots:
     void                            SetupViewers();
+    void                            ClearAllViewers();
 
 private slots:
     void                            SwitchOperateMode();
@@ -41,7 +42,8 @@ private:
     void                            ZoomOut();
     void                            DrawROI();
     void                            AddNodule();
-
+    
+    void                            SetEnabledUIElements(bool enabled);
     void                            SaveCVImage(const std::string name, const cv::Mat& src) const;
     cv::Mat                         ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const;
     cv::Mat                         ConvertVTKImageToShortCVMat(vtkImageData* img, int slice) const;

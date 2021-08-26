@@ -14,6 +14,7 @@ ImageViewer1::ImageViewer1(GlobalState* state, QWidget *parent) :
     ui_->setupUi(this);
     ui_->imageButton_label_mode->setCheckable(true);
     ui_->imageButton_label_mode->setAutoExclusive(true);
+    this->SetEnabledUIElements(false);
     
     QObject::connect(ui_->imageButton_Process, SIGNAL(clicked()), this, SLOT(ToProcess()));
     QObject::connect(ui_->imageButton_LungSegment, SIGNAL(clicked()), this, SLOT(ToLungSegment()));
@@ -36,33 +37,16 @@ ImageViewer1::~ImageViewer1()
 
 void ImageViewer1::SetupViewers()
 {
-    for (auto& viewer : viewer_map_)
-    {
-        if (viewer.second != nullptr)
-        {
-            delete viewer.second;
-            viewer.second = nullptr;
-        }
-    }
-    viewer_map_.clear();
-    for (auto& roi : roi_map_)
-    {
-        if (roi.second != nullptr)
-        {
-            delete roi.second;
-            roi.second = nullptr;
-        }
-    }
-    roi_map_.clear();
-    
+    ClearAllViewers();
     InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
     
     global_state_->image_viewer_1_.Refresh();
-    SwitchOperateMode();
+    this->SwitchOperateMode();
+    this->SetEnabledUIElements(true);
 }
 
 void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
-{    
+{
     Viewer* viewer = new Viewer(view_name, widget, global_state_);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);
@@ -75,6 +59,36 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     viewer->image_interactor()->AddEvent(Event::DRAW_ROI, [&] { DrawROI(); });
     viewer->image_interactor()->AddEvent(Event::ADD_NODULE, [&]{ AddNodule(); });
     viewer_map_[view_name] = viewer;
+}
+
+void ImageViewer1::ClearAllViewers()
+{
+    if (!viewer_map_.empty())
+    {
+        for (auto& viewer : viewer_map_)
+        {
+            if (viewer.second != nullptr)
+            {
+                delete viewer.second;
+                viewer.second = nullptr;
+            }
+        }
+        viewer_map_.clear();
+        ui_->vtk_viewer_0->update();
+    }
+    if (!roi_map_.empty())
+    {
+        for (auto& roi : roi_map_)
+        {
+            if (roi.second != nullptr)
+            {
+                delete roi.second;
+                roi.second = nullptr;
+            }
+        }
+        roi_map_.clear();
+    }
+    this->SetEnabledUIElements(false);
 }
 
 void ImageViewer1::SwitchOperateMode()
@@ -90,6 +104,15 @@ void ImageViewer1::SwitchOperateMode()
         this->ui_->imageButton_label_mode->setChecked(true);
         break;
     }
+}
+
+void ImageViewer1::SetEnabledUIElements(bool enabled)
+{
+    ui_->imageButton_label_mode->setEnabled(enabled);
+    ui_->imageButton_NoduleSegment->setEnabled(enabled);
+    ui_->imageButton_LungSegment->setEnabled(enabled);
+    ui_->imageButton_Process->setEnabled(enabled);
+    ui_->vtk_viewer_0->setEnabled(enabled);
 }
 
 void ImageViewer1::MoveSlicePlus()

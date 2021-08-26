@@ -5,37 +5,49 @@ Viewer::Viewer(ViewName view_name, QVTKOpenGLWidget* widget, GlobalState* state)
     global_state_(state),
     widget_(widget)
 {
-    
 }
 
 Viewer::~Viewer()
 {
+    global_state_ = nullptr;
+    drawing_roi_ = nullptr;
+    
+    if (widget_ != nullptr)
+    {
+        widget_->GetInteractor()->RemoveAllObservers();
+        widget_->GetRenderWindow()->RemoveRenderer(image_render_);
+        widget_->GetRenderWindow()->Render();
+        
+        widget_->update();
+        widget_ = nullptr;
+    }
     if (image_data_ != nullptr)
     {
         image_data_->ReleaseData();
         image_data_ = nullptr;
+        std::cout << "Image Data Delete." << std::endl;
     }
     if (image_render_ != nullptr)  
     {
-#ifdef Q_OS_MAC
-        image_render_->ReleaseGraphicsResources(widget_->GetRenderWindow());
-        image_render_ = nullptr;
-#endif
-#ifdef Q_OS_WIN
+        image_render_->RemoveAllViewProps();
+        image_render_->RemoveAllObservers();
         image_render_->ReleaseGraphicsResources(render_window_);
-        render_window_ = nullptr;
-#endif
-    }
-    if (image_viewer_ != nullptr)       
-    {
-        image_viewer_->RemoveAllObservers();
-        image_viewer_ = nullptr;
+        image_render_ = nullptr;
+        std::cout << "Image Render Delete." << std::endl;
     }
     if (image_interactor_ != nullptr)  
     {
         image_interactor_->RemoveAllObservers();
         image_interactor_ = nullptr;
+        std::cout << "Image Interactor Delete." << std::endl;
     }
+    if (image_viewer_ != nullptr)
+    {
+        image_viewer_->RemoveAllObservers();
+        image_viewer_ = nullptr;
+        std::cout << "Image Viewer Delete." << std::endl;
+    }
+    
     if (!spacing_.empty())
     {
         spacing_.clear();
@@ -51,10 +63,6 @@ Viewer::~Viewer()
         clipping_range_.clear();
         clipping_range_.shrink_to_fit();
     }
-    
-    widget_ = nullptr;
-    global_state_ = nullptr;
-    drawing_roi_ = nullptr;
 
 }
 
@@ -63,10 +71,7 @@ void Viewer::Init(const DcmDataSet& data_set)
     double spacing[3];
     spacing[0] = data_set.spacing_x();
     spacing[1] = data_set.spacing_y();
-    spacing[2] = (data_set.slice_thickness() != 0.0) ? 
-                data_set.slice_thickness() : data_set.spacing_between_slice();
-    //spacing[2] = (data_set.spacing_z() != 0.0) ? 
-    //            data_set.spacing_z() : data_set.spacing_between_slice();
+    spacing[2] = data_set.slice_thickness();
     this->set_spacing(spacing);
     
     int dimension[3];
@@ -90,18 +95,12 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_data_ = vtkSmartPointer<vtkImageData>::New();
     image_data_ = InitVTKImageData(data_set);
 
-#ifdef Q_OS_WIN
     render_window_ = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-#endif
 
     image_viewer_ = vtkSmartPointer<vtkImageViewer2>::New();
-    image_viewer_->SetInputData(image_data_);
-#ifdef Q_OS_MAC
+    image_viewer_->SetInputData(image_data_.Get());
     image_viewer_->SetRenderWindow(widget_->GetRenderWindow());
-#endif
-#ifdef Q_OS_WIN
-    image_viewer_->SetRenderWindow(render_window_);
-#endif
+    //image_viewer_->SetRenderWindow(render_window_.Get());
     image_viewer_->Modified();
     
     image_render_ = image_viewer_->GetRenderer();
@@ -111,21 +110,18 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_render_->Modified();
     
     image_interactor_ = vtkSmartPointer<ViewerInteractor>::New();
-    image_interactor_->SetCurrentRenderer(image_render_);
+    image_interactor_->SetCurrentRenderer(image_render_.Get());
     image_interactor_->SetAutoAdjustCameraClippingRange(false);
-    image_interactor_->set_image_viewer(image_viewer_);
+    image_interactor_->set_image_viewer(image_viewer_.Get());
     image_interactor_->set_global_state(global_state_);
     image_interactor_->set_view_name(view_name_);
     image_interactor_->Modified();
- 
-#ifdef Q_OS_MAC
+    
+    //widget_->SetRenderWindow(render_window_.Get());
+    //widget_->GetInteractor()->SetRenderWindow(render_window_.Get());
+    widget_->SetRenderWindow(image_viewer_->GetRenderWindow());
     widget_->GetInteractor()->SetRenderWindow(image_viewer_->GetRenderWindow());
-#endif
-#ifdef Q_OS_WIN
-    widget_->SetRenderWindow(render_window_);
-    widget_->GetInteractor()->SetRenderWindow(render_window_);
-#endif
-    widget_->GetInteractor()->SetInteractorStyle(image_interactor_);
+    widget_->GetInteractor()->SetInteractorStyle(image_interactor_.Get());
     widget_->update();
     
     image_viewer_->Render();

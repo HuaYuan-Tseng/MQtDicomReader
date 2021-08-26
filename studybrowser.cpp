@@ -286,6 +286,7 @@ void StudyBrowser::ToClearOpenedDicom()
     RefreshSeriesTableContents();
     RefreshInstanceTableContents();
     ui_->progressbar->setValue(0);
+    emit StartToClearImageViewer1();
 }
 
 void StudyBrowser::SetStudyTableHeader()
