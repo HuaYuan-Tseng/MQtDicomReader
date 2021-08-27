@@ -31,7 +31,13 @@ Viewer::~Viewer()
     {
         image_render_->RemoveAllViewProps();
         image_render_->RemoveAllObservers();
+#ifdef Q_OS_WIN
+        // Windows
         image_render_->ReleaseGraphicsResources(render_window_);
+#else
+        // MacOS
+        image_render_->ReleaseGraphicsResources(image_viewer_->GetRenderWindow());
+#endif
         image_render_ = nullptr;
         std::cout << "Image Render Delete." << std::endl;
     }
@@ -99,8 +105,13 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
 
     image_viewer_ = vtkSmartPointer<vtkImageViewer2>::New();
     image_viewer_->SetInputData(image_data_.Get());
+#ifdef Q_OS_WIN
+    // Windows
+    image_viewer_->SetRenderWindow(render_window_.Get());
+#else
+    // MacOS
     image_viewer_->SetRenderWindow(widget_->GetRenderWindow());
-    //image_viewer_->SetRenderWindow(render_window_.Get());
+#endif
     image_viewer_->Modified();
     
     image_render_ = image_viewer_->GetRenderer();
@@ -117,10 +128,15 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
     image_interactor_->set_view_name(view_name_);
     image_interactor_->Modified();
     
-    //widget_->SetRenderWindow(render_window_.Get());
-    //widget_->GetInteractor()->SetRenderWindow(render_window_.Get());
+#ifdef Q_OS_WIN
+    // Windows
+    widget_->SetRenderWindow(render_window_.Get());
+    widget_->GetInteractor()->SetRenderWindow(render_window_.Get());
+#else
+    // MacOS
     widget_->SetRenderWindow(image_viewer_->GetRenderWindow());
     widget_->GetInteractor()->SetRenderWindow(image_viewer_->GetRenderWindow());
+#endif
     widget_->GetInteractor()->SetInteractorStyle(image_interactor_.Get());
     widget_->update();
     

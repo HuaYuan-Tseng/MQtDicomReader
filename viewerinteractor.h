@@ -49,7 +49,6 @@ protected:
     
 private:
     void            ConfirmCurrentControlView();
-	//void			GetMouseLocation(double world_pos[3], int image_pos[3]);
 	double*			GetMouseWorldLocation();
 
 private:

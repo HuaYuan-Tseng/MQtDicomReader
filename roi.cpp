@@ -79,11 +79,22 @@ void ROI::ConstructROIActor()
 	// 0 3
 	// 1 2 
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    double world_z_pos = world_top_left_[2];
-    points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_z_pos);
-    points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_z_pos);
-    points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_z_pos);
-    points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_z_pos);
+    if (view_name_ == ViewName::TRA)
+    {
+        double world_z_pos = world_top_left_[2];
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_z_pos);
+        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_z_pos);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_z_pos);
+        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_z_pos);
+    }
+    else
+    {
+        double world_z_pos = world_top_left_[1];
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[2], world_z_pos);
+        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[2], world_z_pos);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[2], world_z_pos);
+        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[2], world_z_pos);
+    }
 	
 	vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
 	for (int i = 0; i < 4; ++i)

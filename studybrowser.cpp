@@ -47,7 +47,7 @@ void StudyBrowser::ToLoadFromFolder()
     QString init_path = "/Users/huayuan/Documents/Dev/Dicom";
 #endif
 #ifdef Q_OS_WIN
-    QString init_path = "D:/TestCases/LungCT";
+    QString init_path = "D:/READING_STUDY_TEST/dicom";
 #endif
     
     global_state_->study_browser_.open_dir_ =
@@ -55,8 +55,6 @@ void StudyBrowser::ToLoadFromFolder()
                                               init_path,
                                               QFileDialog::ShowDirsOnly |
                                               QFileDialog::DontResolveSymlinks);
-    
-    //global_state_->study_browser_.open_dir_ = "D:/TestCases/LungCT/3759213/";
 
     if (global_state_->study_browser_.open_dir_.isEmpty()) return;
 
