@@ -25,7 +25,6 @@ Viewer::~Viewer()
     {
         image_data_->ReleaseData();
         image_data_ = nullptr;
-        std::cout << "Image Data Delete." << std::endl;
     }
     if (image_render_ != nullptr)  
     {
@@ -39,21 +38,17 @@ Viewer::~Viewer()
         image_render_->ReleaseGraphicsResources(image_viewer_->GetRenderWindow());
 #endif
         image_render_ = nullptr;
-        std::cout << "Image Render Delete." << std::endl;
     }
     if (image_interactor_ != nullptr)  
     {
         image_interactor_->RemoveAllObservers();
         image_interactor_ = nullptr;
-        std::cout << "Image Interactor Delete." << std::endl;
     }
     if (image_viewer_ != nullptr)
     {
         image_viewer_->RemoveAllObservers();
         image_viewer_ = nullptr;
-        std::cout << "Image Viewer Delete." << std::endl;
     }
-    
     if (!spacing_.empty())
     {
         spacing_.clear();
@@ -292,11 +287,11 @@ void Viewer::DragSlice()
     else if (view_name_ == ViewName::SAG)
     {
         image_viewer_->SetSlice(image_viewer_->GetSlice() -
-            (global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0] -
-                global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0]));
+            (global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[2] -
+                global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[2]));
 
-        global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] =
-            global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0];
+        global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[2] =
+            global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[2];
 
         global_state_->image_viewer_1_.control_map_[view_name_].control_current_slice = image_viewer_->GetSlice();
     }
@@ -361,5 +356,4 @@ void Viewer::DrawROI(ROI* roi)
     drawing_roi_ = roi->vtk_actor();
     image_viewer_->GetRenderer()->AddActor(drawing_roi_);
     this->RefreshViewer();
-    //std::cout << "Roi pos : " << drawing_roi_->GetCenter()[0] << " , " << drawing_roi_->GetCenter()[1] << " , " << drawing_roi_->GetCenter()[2] << std::endl;
 }

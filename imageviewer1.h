@@ -53,7 +53,7 @@ private:
     Ui::ImageViewer1*               ui_;
     GlobalState*                    global_state_;
     std::map<ViewName, Viewer*>     viewer_map_;
-    std::map<ViewName, ROI*>        roi_map_;
+    std::map<ViewName, ROI*>        drawing_roi_map_;
     std::vector<Nodule*>            nodule_list_;
 };
 

@@ -37,7 +37,7 @@ ImageViewer1::~ImageViewer1()
 void ImageViewer1::SetupViewers()
 {
     this->ClearAllViewers();
-    InitViewer(ViewName::COR, ui_->vtk_viewer_0);
+    InitViewer(ViewName::TRA, ui_->vtk_viewer_0);
     
     global_state_->image_viewer_1_.Refresh();
     this->SwitchOperateMode();
@@ -74,9 +74,9 @@ void ImageViewer1::ClearAllViewers()
         }
         viewer_map_.clear();
     }
-    if (!roi_map_.empty())
+    if (!drawing_roi_map_.empty())
     {
-        for (auto& roi : roi_map_)
+        for (auto& roi : drawing_roi_map_)
         {
             if (roi.second != nullptr)
             {
@@ -84,7 +84,7 @@ void ImageViewer1::ClearAllViewers()
                 roi.second = nullptr;
             }
         }
-        roi_map_.clear();
+        drawing_roi_map_.clear();
     }
     ui_->vtk_viewer_0->update();
     this->SetEnabledUIElements(false);
@@ -144,8 +144,9 @@ void ImageViewer1::DrawROI()
     ViewName name = global_state_->image_viewer_1_.current_control_view_;
     std::vector<double> spacing = viewer_map_[name]->spacing();
     
-    if (roi_map_.find(name) == roi_map_.end())  roi_map_[name] = new ROI(name, spacing);
-    ROI* roi = roi_map_[name];
+    if (drawing_roi_map_.find(name) == drawing_roi_map_.end())  
+        drawing_roi_map_[name] = new ROI(name, spacing);
+    ROI* roi = drawing_roi_map_[name];
     
     roi->set_world_top_left(global_state_->image_viewer_1_.control_map_[name].start_mouse_world_pos_);
     roi->set_world_bottom_right(global_state_->image_viewer_1_.control_map_[name].curr_mouse_world_pos_);
@@ -158,7 +159,7 @@ void ImageViewer1::DrawROI()
 
 void ImageViewer1::AddNodule()
 {
-
+    
 }
 
 cv::Mat ImageViewer1::ConvertVTKImageToUCharCVMat(vtkImageData* img, int slice) const

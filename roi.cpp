@@ -9,6 +9,7 @@ ROI::ROI(ViewName name, std::vector<double> spacing) :
 
 ROI::ROI(const ROI& roi)
 {
+    view_name_ = roi.view_name();
 	spacing_.assign(roi.spacing().begin(), roi.spacing().end());
     
     world_top_left_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
@@ -52,6 +53,7 @@ ROI::~ROI()
 
 ROI& ROI::operator = (const ROI& roi)
 {
+    view_name_ = roi.view_name();
 	spacing_.assign(roi.spacing().begin(), roi.spacing().end());
     
     world_top_left_.assign(roi.world_top_left().begin(), roi.world_bottom_right().end());
@@ -80,20 +82,25 @@ void ROI::ConstructROIActor()
 	// 1 2 
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
     if (view_name_ == ViewName::TRA)
-    {
-        double world_z_pos = world_top_left_[2];
-        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_z_pos);
-        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_z_pos);
-        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_z_pos);
-        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_z_pos);
+    {   // X. Y.
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_top_left_[2]);
+        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_top_left_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_top_left_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_top_left_[2]);
     }
-    else
-    {
-        double world_z_pos = world_top_left_[1];
-        points->InsertNextPoint(world_top_left_[0], world_top_left_[2], world_z_pos);
-        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[2], world_z_pos);
-        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[2], world_z_pos);
-        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[2], world_z_pos);
+    else if (view_name_ == ViewName::COR)
+    {   // X. Z.
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_top_left_[2]);
+        points->InsertNextPoint(world_top_left_[0], world_bottom_right_[1], world_bottom_right_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_bottom_right_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_top_left_[1], world_top_left_[2]);
+    }
+    else if (view_name_ == ViewName::SAG)
+    {   // Y. Z.
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_top_left_[2]);
+        points->InsertNextPoint(world_top_left_[0], world_top_left_[1], world_bottom_right_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_bottom_right_[2]);
+        points->InsertNextPoint(world_bottom_right_[0], world_bottom_right_[1], world_top_left_[2]);
     }
 	
 	vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();

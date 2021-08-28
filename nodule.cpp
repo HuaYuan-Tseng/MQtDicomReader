@@ -24,12 +24,9 @@ Nodule::~Nodule()
 void Nodule::set_roi(const ROI& roi)
 {
 	label_init_slice_ = roi.pixel_top_left()[2];
-    std::cout << label_init_slice_ << std::endl;
 	contour_start_slice_ = contour_end_slice_ = label_init_slice_;
 	roi_list_[label_init_slice_] = roi;
-    std::cout << "Set roi" << std::endl;
     roi_list_[label_init_slice_].set_vtk_actor();
-    std::cout << "Set roi actor" << std::endl;
 }
 
 void Nodule::set_contour(int slice, const Contour& contour)
@@ -69,7 +66,7 @@ bool Nodule::get_vtk_contour_actor(int slice, VTKContour& contour) const
 	return true;
 }
 
-bool Nodule::get_vtk_roi_actor(int slice, vtkSmartPointer<vtkActor> roi) const
+bool Nodule::get_vtk_roi_actor(int slice, vtkSmartPointer<vtkActor>& roi) const
 {
 	if (roi_list_.find(slice) == roi_list_.end())
 		return false;
@@ -113,9 +110,10 @@ Nodule::VTKContour Nodule::ConstructContourVTKActor(int slice, const Contour& co
 		pt[2] = (slice + 1) * spacing_[2] - spacing_[2] / 2;
 		points->InsertNextPoint(pt);
 
+        int list_size = static_cast<int>(list.size());
 		vtkSmartPointer<vtkPolyLine> line = vtkSmartPointer<vtkPolyLine>::New();
-		line->GetPointIds()->SetNumberOfIds(list.size() + 1);
-		for (int i = 0; i < (list.size() + 1); ++i)
+		line->GetPointIds()->SetNumberOfIds(list_size + 1);
+		for (int i = 0; i < (list_size + 1); ++i)
 			line->GetPointIds()->SetId(i, i);
 
 		vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();

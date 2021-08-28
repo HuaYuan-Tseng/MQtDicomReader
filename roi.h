@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ROI_H
+#define ROI_H
+
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
@@ -14,29 +16,31 @@ public:
 				ROI(const ROI& roi);
 	explicit	ROI(ViewName name, std::vector<double> spacing);
 				~ROI();
-				
 
 	ROI&		operator = (const ROI& roi);
 
 	//---------------------------------------------------------------------//
     
+    void                        set_view_name(ViewName name) { view_name_ = name; }
+    ViewName                    view_name() const { return view_name_; }
+    
 	void						set_vtk_actor();
-	void						set_vtk_actor(vtkSmartPointer<vtkActor> actor) { roi_actor_ = actor; }
+	void						set_vtk_actor(vtkSmartPointer<vtkActor>& actor) { roi_actor_ = actor; }
 	vtkSmartPointer<vtkActor>	vtk_actor() const { return roi_actor_; }
 
-	void						set_spacing(std::vector<double> spacing) { spacing_ = spacing; }
+	void						set_spacing(std::vector<double>& spacing) { spacing_ = spacing; }
 	const std::vector<double>&  spacing() const { return spacing_; }
 
-	void						set_world_top_left(std::vector<double> pos) { world_top_left_ = pos; }
+	void						set_world_top_left(std::vector<double>& pos) { world_top_left_ = pos; }
 	const std::vector<double>&  world_top_left() const { return world_top_left_; }
 
-	void						set_world_bottom_right(std::vector<double> pos) { world_bottom_right_ = pos; }
+	void						set_world_bottom_right(std::vector<double>& pos) { world_bottom_right_ = pos; }
 	const std::vector<double>&  world_bottom_right() const { return world_bottom_right_; }
 
-	void						set_pixel_top_left(std::vector<int> pos) { pixel_top_left_ = pos; }
+	void						set_pixel_top_left(std::vector<int>& pos) { pixel_top_left_ = pos; }
 	const std::vector<int>&     pixel_top_left() const { return pixel_top_left_; }
 
-	void						set_pixel_bottom_right(std::vector<int> pos) { pixel_bottom_right_ = pos; }
+	void						set_pixel_bottom_right(std::vector<int>& pos) { pixel_bottom_right_ = pos; }
 	const std::vector<int>&     pixel_bottom_right() const { return pixel_bottom_right_; }
 
 private:
@@ -53,3 +57,4 @@ private:
 	
 };
 
+#endif

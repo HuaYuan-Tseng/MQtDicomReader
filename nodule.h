@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NODULE_H
+#define NODULE_H
 
 #include <vtkPolyLine.h>
 #include <opencv2/opencv.hpp>
@@ -16,12 +17,12 @@ public:
 	void					set_roi(const ROI& roi);
 
 	void					set_contour(int slice, const Contour& contour);
-	bool                    get_contour(int slice, Contour& contour) const;		// C++ 17 : [[nodiscard]]
+	bool                    get_contour(int slice, Contour& contour) const;		// C++17 : [[nodiscard]]
 	void					remove_contour(int slice);
 
 	bool                    get_vtk_contour_actor(int slice, VTKContour& contour) const;
 
-	bool                    get_vtk_roi_actor(int slice, vtkSmartPointer<vtkActor> roi) const;
+	bool                    get_vtk_roi_actor(int slice, vtkSmartPointer<vtkActor>& roi) const;
 
 	//------------------------------------------------------------------------//
 
@@ -39,7 +40,7 @@ public:
 
 private:
 	VTKContour				ConstructContourVTKActor(int slice, const Contour& contour);
-	ROI                    ConstructROIVTKActor(int slice);
+	ROI                     ConstructROIVTKActor(int slice);
 	void					CheckStartEndSlice();
 
 private:
@@ -57,3 +58,4 @@ private:
 
 };
 
+#endif

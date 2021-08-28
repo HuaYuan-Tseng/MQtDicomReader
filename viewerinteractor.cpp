@@ -30,9 +30,13 @@ void ViewerInteractor::OnMouseMove()
     double* world_pos = GetMouseWorldLocation();
     int image_pos[3];
         image_pos[0] = world_pos[0] / image_viewer_->GetInput()->GetSpacing()[0];
-        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - 
-                        (world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1]);
+        image_pos[1] = world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1];
         image_pos[2] = world_pos[2] / image_viewer_->GetInput()->GetSpacing()[2];
+    
+    if (view_name_ == ViewName::TRA)
+        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - image_pos[1];
+    else 
+        image_pos[2] = image_viewer_->GetInput()->GetDimensions()[2] - image_pos[2];
 
     global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[0] = world_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].curr_mouse_world_pos_[1] = world_pos[1];
@@ -84,9 +88,13 @@ void ViewerInteractor::OnLeftButtonDown()
     double* world_pos = GetMouseWorldLocation();
     int image_pos[3];
         image_pos[0] = world_pos[0] / image_viewer_->GetInput()->GetSpacing()[0];
-        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] -
-                        (world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1]);
+        image_pos[1] = world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1];
         image_pos[2] = world_pos[2] / image_viewer_->GetInput()->GetSpacing()[2];
+    
+    if (view_name_ == ViewName::TRA)
+        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - image_pos[1];
+    else 
+        image_pos[2] = image_viewer_->GetInput()->GetDimensions()[2] - image_pos[2];
 
     global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] = world_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[1] = world_pos[1];
@@ -111,9 +119,13 @@ void ViewerInteractor::OnLeftButtonUp()
     double* world_pos = GetMouseWorldLocation();
     int image_pos[3];
         image_pos[0] = world_pos[0] / image_viewer_->GetInput()->GetSpacing()[0];
-        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] -
-                        (world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1]);
+        image_pos[1] = world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1];
         image_pos[2] = world_pos[2] / image_viewer_->GetInput()->GetSpacing()[2];
+    
+    if (view_name_ == ViewName::TRA)
+        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - image_pos[1];
+    else 
+        image_pos[2] = image_viewer_->GetInput()->GetDimensions()[2] - image_pos[2];
 
     global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_[0] = world_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_[1] = world_pos[1];
@@ -132,7 +144,7 @@ void ViewerInteractor::OnLeftButtonUp()
     // Label Nodule
     if (global_state_->image_viewer_1_.current_operate_mode_ == OperateMode::LABEL_NODULE)
     {
-        //event_map_[Event::ADD_NODULE]();
+        event_map_[Event::ADD_NODULE]();
     }
 }
 
@@ -144,9 +156,13 @@ void ViewerInteractor::OnRightButtonDown()
     double* world_pos = GetMouseWorldLocation();
     int image_pos[3];
         image_pos[0] = world_pos[0] / image_viewer_->GetInput()->GetSpacing()[0];
-        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] -
-                        (world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1]);
+        image_pos[1] = world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1];
         image_pos[2] = world_pos[2] / image_viewer_->GetInput()->GetSpacing()[2];
+    
+    if (view_name_ == ViewName::TRA)
+        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - image_pos[1];
+    else 
+        image_pos[2] = image_viewer_->GetInput()->GetDimensions()[2] - image_pos[2];
 
     global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[0] = world_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].start_mouse_world_pos_[1] = world_pos[1];
@@ -165,9 +181,13 @@ void ViewerInteractor::OnRightButtonUp()
     double* world_pos = GetMouseWorldLocation();
     int image_pos[3];
         image_pos[0] = world_pos[0] / image_viewer_->GetInput()->GetSpacing()[0];
-        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] -
-                        (world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1]);
+        image_pos[1] = world_pos[1] / image_viewer_->GetInput()->GetSpacing()[1];
         image_pos[2] = world_pos[2] / image_viewer_->GetInput()->GetSpacing()[2];
+    
+    if (view_name_ == ViewName::TRA)
+        image_pos[1] = image_viewer_->GetInput()->GetDimensions()[1] - image_pos[1];
+    else 
+        image_pos[2] = image_viewer_->GetInput()->GetDimensions()[2] - image_pos[2];
 
     global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_[0] = world_pos[0];
     global_state_->image_viewer_1_.control_map_[view_name_].end_mouse_world_pos_[1] = world_pos[1];
