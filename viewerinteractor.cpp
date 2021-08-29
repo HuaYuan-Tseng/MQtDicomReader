@@ -78,6 +78,7 @@ void ViewerInteractor::OnMouseMove()
             else if (cur_y < pre_y)     event_map_[Event::ZOOM_OUT]();
         }
     }
+    event_map_[Event::REFRESH_VIEWER]();
 }
 
 void ViewerInteractor::OnLeftButtonDown()

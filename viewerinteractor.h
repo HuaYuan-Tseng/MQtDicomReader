@@ -17,6 +17,7 @@
 #include "globalstate.h"
 
 enum class Event {
+    REFRESH_VIEWER,
     MOVE_SLICE_PLUS,	MOVE_SLICE_MINUS,	DRAG_SLICE,
 	ZOOM_IN,			ZOOM_OUT,			
 	DRAW_ROI,           ADD_NODULE

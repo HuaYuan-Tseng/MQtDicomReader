@@ -35,6 +35,7 @@ private slots:
 
 private:
     void                            InitViewer(ViewName view_name, QVTKOpenGLWidget* widget);
+    void                            RefreshViewer();
     void                            MoveSlicePlus();
     void                            MoveSliceMinus();
     void                            DragSlice();

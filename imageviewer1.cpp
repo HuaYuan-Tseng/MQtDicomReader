@@ -50,6 +50,7 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);
     viewer->Init(global_state_->study_browser_.dcm_data_set_);
+    viewer->image_interactor()->AddEvent(Event::REFRESH_VIEWER, [&]{ RefreshViewer(); });
     viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_PLUS, [&]{ MoveSlicePlus(); });
     viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_MINUS, [&]{ MoveSliceMinus(); });
     viewer->image_interactor()->AddEvent(Event::DRAG_SLICE, [&] { DragSlice(); });
@@ -112,6 +113,11 @@ void ImageViewer1::SetEnabledUIElements(bool enabled)
     ui_->imageButton_LungSegment->setEnabled(enabled);
     ui_->imageButton_Process->setEnabled(enabled);
     ui_->vtk_viewer_0->setEnabled(enabled);
+}
+
+void ImageViewer1::RefreshViewer()
+{
+    viewer_map_[global_state_->image_viewer_1_.current_control_view_]->RefreshViewer();
 }
 
 void ImageViewer1::MoveSlicePlus()

@@ -11,6 +11,7 @@
 #include <vtkImageActor.h>
 #include <vtkCoordinate.h>
 #include "viewerinteractor.h"
+#include "viewertext.h"
 
 #include <QVTKOpenGLWidget.h>
 #include <QString>
@@ -77,6 +78,7 @@ private:
     vtkSmartPointer<vtkImageViewer2>                image_viewer_ = nullptr;
     vtkSmartPointer<vtkRenderer>                    image_render_ = nullptr;
     vtkSmartPointer<ViewerInteractor>               image_interactor_ = nullptr;
+    ViewerText                                      viewer_text_;
 
     std::vector<double>                             spacing_ = {};
     std::vector<int>                                dimension_ = {};

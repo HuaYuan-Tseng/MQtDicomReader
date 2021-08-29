@@ -32,10 +32,13 @@ struct Table
 struct OperateViewer {
     ViewName                operate_view = ViewName::TRA;
     bool                    is_control_current_view = false;
+    
+    // mouse position on world coordinate (world formate).
     std::vector<double>     start_mouse_world_pos_ = { 0, 0, 0 };
     std::vector<double>     curr_mouse_world_pos_ = { 0, 0, 0 };
     std::vector<double>     end_mouse_world_pos_ = { 0, 0, 0 };
 
+    // mouse position on "world coordinate" (image formate).
     std::vector<int>        start_mouse_pixel_pos_ = { 0, 0, 0 };
     std::vector<int>        curr_mouse_pixel_pos_ = { 0, 0, 0 };
     std::vector<int>        end_mouse_pixel_pos_ = { 0, 0, 0 };

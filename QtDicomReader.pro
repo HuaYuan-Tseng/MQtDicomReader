@@ -25,7 +25,8 @@ SOURCES += \
     studybrowser.cpp \
     tableoperate.cpp \
     viewer.cpp \
-    viewerinteractor.cpp
+    viewerinteractor.cpp \
+    viewertext.cpp
 
 HEADERS += \
     cvtest.h \
@@ -38,11 +39,12 @@ HEADERS += \
     imageviewer1.h \
     mainwindow.h \
     nodule.h \
-    roi.h \ 
+    roi.h \
     studybrowser.h \
     tableoperate.h \
     viewer.h \
-    viewerinteractor.h
+    viewerinteractor.h \
+    viewertext.h
 
 FORMS += \
     imageviewer1.ui \

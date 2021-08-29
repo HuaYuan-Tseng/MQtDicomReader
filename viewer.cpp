@@ -134,10 +134,12 @@ void Viewer::InitVTKWidget(const DcmDataSet& data_set)
 #endif
     widget_->GetInteractor()->SetInteractorStyle(image_interactor_.Get());
     widget_->update();
-    
-    image_viewer_->Render();
+
     image_viewer_->SetColorLevel(window_center_);
     image_viewer_->SetColorWindow(window_width_);
+    viewer_text_.Init(view_name_, global_state_, image_viewer_.Get());
+    image_viewer_->Render();
+    
     if (view_name_ == ViewName::TRA)
     {
         image_viewer_->SetSliceOrientationToXY();
@@ -239,6 +241,7 @@ void Viewer::set_clipping_range()
 
 void Viewer::RefreshViewer()
 {
+    viewer_text_.Update();
     this->set_clipping_range();
     image_viewer_->GetRenderer()->GetActiveCamera()->SetClippingRange(clipping_range_[0], clipping_range_[1]);
     image_viewer_->Render();
