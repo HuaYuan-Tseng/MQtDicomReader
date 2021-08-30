@@ -49,15 +49,16 @@ void ImageViewer1::InitViewer(ViewName view_name, QVTKOpenGLWidget* widget)
     Viewer* viewer = new Viewer(view_name, widget, global_state_);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_width(1500);
     global_state_->study_browser_.dcm_data_set_.set_pixel_data_window_center(-400);
+    
     viewer->Init(global_state_->study_browser_.dcm_data_set_);
-    viewer->image_interactor()->AddEvent(Event::REFRESH_VIEWER, [&]{ RefreshViewer(); });
-    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_PLUS, [&]{ MoveSlicePlus(); });
-    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_MINUS, [&]{ MoveSliceMinus(); });
-    viewer->image_interactor()->AddEvent(Event::DRAG_SLICE, [&] { DragSlice(); });
-    viewer->image_interactor()->AddEvent(Event::ZOOM_IN, [&]{ ZoomIn(); });
-    viewer->image_interactor()->AddEvent(Event::ZOOM_OUT, [&]{ ZoomOut(); });
-    viewer->image_interactor()->AddEvent(Event::DRAW_ROI, [&] { DrawROI(); });
-    viewer->image_interactor()->AddEvent(Event::ADD_NODULE, [&]{ AddNodule(); });
+    viewer->image_interactor()->AddEvent(Event::REFRESH_VIEWER,     [&]{ RefreshViewer(); });
+    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_PLUS,    [&]{ MoveSlicePlus(); });
+    viewer->image_interactor()->AddEvent(Event::MOVE_SLICE_MINUS,   [&]{ MoveSliceMinus(); });
+    viewer->image_interactor()->AddEvent(Event::DRAG_SLICE,         [&]{ DragSlice(); });
+    viewer->image_interactor()->AddEvent(Event::ZOOM_IN,            [&]{ ZoomIn(); });
+    viewer->image_interactor()->AddEvent(Event::ZOOM_OUT,           [&]{ ZoomOut(); });
+    viewer->image_interactor()->AddEvent(Event::DRAW_ROI,           [&]{ DrawROI(); });
+    viewer->image_interactor()->AddEvent(Event::ADD_NODULE,         [&]{ AddNodule(); });
     viewer_map_[view_name] = viewer;
 }
 

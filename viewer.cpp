@@ -72,7 +72,8 @@ void Viewer::Init(const DcmDataSet& data_set)
     double spacing[3];
     spacing[0] = data_set.spacing_x();
     spacing[1] = data_set.spacing_y();
-    spacing[2] = data_set.slice_thickness();
+    spacing[2] = (data_set.frames_per_instance() == 1) ? 
+                data_set.slice_thickness() : data_set.spacing_between_slice();
     this->set_spacing(spacing);
     
     int dimension[3];

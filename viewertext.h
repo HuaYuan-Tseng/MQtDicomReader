@@ -33,18 +33,18 @@ private:
     void                UpdateText(std::string str, int justification, int vertical_justification,
                                    double init_x, double init_y, vtkSmartPointer<vtkActor2D>& vtk_str);
     
-    ViewName                    view_name_ = ViewName::TRA;
-    GlobalState*                global_state_ = nullptr;
-    vtkImageViewer2*            image_viewer_ = nullptr;
+    ViewName                        view_name_ = ViewName::TRA;
+    GlobalState*                    global_state_ = nullptr;
+    vtkImageViewer2*                image_viewer_ = nullptr;
     
-    vtkSmartPointer<vtkActor2D>   top_left_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   bottom_left_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_a_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_p_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_l_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_r_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_s_text_ = nullptr;
-    vtkSmartPointer<vtkActor2D>   axis_i_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_a_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_p_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_l_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_r_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_s_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     axis_i_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     top_left_text_ = nullptr;
+    vtkSmartPointer<vtkActor2D>     bottom_left_text_ = nullptr;
 };
 
 #endif // VIEWERTEXT_H
